@@ -92,12 +92,17 @@ let S=JSON.parse(localStorage.plt||'{"scouts":{},"as":{}}'),db=null,tab='assess'
 function blank(){return{act:A&&A.act||'',mp:'',s:null,ans:Array(9).fill(''),n:Array(9).fill(''),c:''}}
 
 (function(){
+let why='';
+(function(){
  let cfg=FB; try{cfg=cfg||JSON.parse(localStorage.pltfb||'null')}catch(e){}
- if(cfg&&typeof firebase!=='undefined'){
+ if(!cfg){why='no Firebase config in the file'}
+ else if(typeof firebase==='undefined'){why='Firebase library did not load'}
+ else{
   try{firebase.initializeApp(cfg);db=firebase.database();
    ['scouts','as'].forEach(k=>db.ref(k).on('value',s=>{S[k]=s.val()||{};
     const f=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
-    if(tab!=='assess'||(!A.s&&!f))render()}))}catch(e){console.error(e);db=null}}
+    if(tab!=='assess'||(!A.s&&!f))render()},e=>{why='database refused access: '+e.message;db=null;render()}))}
+  catch(e){why='error: '+e.message;db=null}}
 })();
 
 function put(k,id,v){
@@ -239,5 +244,5 @@ function csv(){
  Object.values(S.as).sort((a,b)=>a.t<b.t?-1:1).forEach(r=>rows.push([r.t,r.nm,r.pt,r.act,r.by,...[...r.a].map(v=>({Y:'Yes',N:'No',O:'Not observed'})[v]),Object.entries(r.n||{}).map(([i,t])=>CRIT[i][0]+': '+t).join('; '),r.c]));
  dl('pl-assessments.csv',rows.map(r=>r.map(q).join(',')).join('\n'),'text/csv')}
 
-render();
+render( $('mode').textContent=db?'● Live – shared across devices':'⚠ This device only – '+why;);
 </script></body></html>
