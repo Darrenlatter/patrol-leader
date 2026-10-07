@@ -1,249 +1,285 @@
 <!DOCTYPE html>
-<html lang="en-GB"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PL Training Weekend</title>
-<style>
-:root{--navy:#0b2a4a;--gold:#e8b420;--ink:#16202c;--bg:#f3f5f8;--card:#fff;--line:#d6dce4;--g:#1f8a4c;--r:#c33a3a;--m:#8a94a3}
-*{box-sizing:border-box}body{margin:0;font:16px/1.4 system-ui,sans-serif;color:var(--ink);background:var(--bg);padding-bottom:76px}
-#mode{background:var(--navy);color:#fff;font-size:13px;padding:6px 12px;text-align:center}
-#mode.l{background:#8a5a00}
-main{max-width:820px;margin:0 auto;padding:12px}
-h2{margin:6px 0 10px;font-size:20px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:12px}
-label{display:block;font-size:13px;font-weight:600;margin:8px 0 3px}
-input,select,textarea{width:100%;font:inherit;padding:10px;border:1px solid var(--line);border-radius:6px;background:#fff}
-textarea{min-height:70px}
-button{font:inherit;border:1px solid var(--navy);background:#fff;color:var(--navy);padding:10px 14px;border-radius:6px;cursor:pointer}
-button.p{background:var(--navy);color:#fff}button.gold{background:var(--gold);border-color:var(--gold);color:#222;font-weight:700}
-button.big{width:100%;padding:16px;font-size:18px}
-nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--navy);z-index:5}
-nav button{flex:1;border:0;border-radius:0;background:none;color:#b8c6d8;padding:16px 4px}
-nav button.on{color:var(--gold);font-weight:700;box-shadow:inset 0 3px var(--gold)}
-.who{background:var(--navy);color:#fff;border-radius:8px;padding:16px;margin-bottom:12px;text-align:center}
-.who b{display:block;font-size:30px;line-height:1.1}.who span{display:block;font-size:22px;color:var(--gold);margin:4px 0}.who small{opacity:.8}
-.warn{background:#fff3cd;border:1px solid #e5c76b;padding:8px 10px;border-radius:6px;margin-bottom:12px;font-size:14px}
-.row{border-bottom:1px solid var(--line);padding:10px 0}.row:last-child{border:0}
-.q{font-weight:600;margin-bottom:6px}
-.btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
-.btns button{padding:12px 4px}
-.btns .Y.on{background:var(--g);border-color:var(--g);color:#fff}.btns .N.on{background:var(--r);border-color:var(--r);color:#fff}.btns .O.on{background:var(--m);border-color:var(--m);color:#fff}
-.nt{margin-top:6px;padding:7px;font-size:14px}
-.grid{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px}
-th,td{padding:5px 4px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
-td:first-child,th:first-child{text-align:left;position:sticky;left:0;background:var(--card)}
-.cy{background:#cfeedd;color:var(--g);font-weight:700}.cn{background:#f6d6d6;color:var(--r);font-weight:700}.co{color:var(--m)}
-.bar{height:8px;background:#e3e8ee;border-radius:4px;overflow:hidden;margin:6px 0}.bar i{display:block;height:100%;background:var(--g)}
-details.card summary{cursor:pointer;list-style:none}summary::-webkit-details-marker{display:none}
-.top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.pt{color:var(--m);font-size:14px}
-.at{display:flex;gap:8px;padding:3px 0;font-size:14px}.at .y{color:var(--g)}.at .n{color:var(--r)}.at .o{color:var(--m)}.at s{text-decoration:none;width:1.2em;font-weight:700}
-.h{font-size:13px;border-top:1px solid var(--line);padding:6px 0;color:#445}.h a{color:var(--r);margin-left:8px;cursor:pointer}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-#scan{position:fixed;inset:0;background:#000;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:12px}
-#scan[hidden]{display:none}#vid{width:100%;max-height:70vh;object-fit:cover}
-.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.bd{border:1px dashed #889;padding:8px;text-align:center;background:#fff;break-inside:avoid}.bd svg{width:100%;height:auto;max-width:130px}.bd b{display:block}.bd small{color:var(--m)}
-.toast{position:fixed;top:50px;left:50%;transform:translateX(-50%);background:var(--g);color:#fff;padding:10px 18px;border-radius:20px;z-index:30}
-@media print{nav,#mode,.noprint{display:none!important}body{background:#fff}}
-</style></head><body>
-<div id="mode"></div><main id="app"></main>
-<div id="scan" hidden><video id="vid" playsinline muted></video><div id="smsg">Point the camera at the Scout's QR code</div><button onclick="stopScan()">Cancel</button></div>
-<nav>
-<button data-t="assess" onclick="go('assess')">Assess</button><button data-t="dash" onclick="go('dash')">Dashboard</button>
-<button data-t="roster" onclick="go('roster')">Scouts</button><button data-t="setup" onclick="go('setup')">Setup</button>
-</nav>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-<script>
-// Optional: paste your Firebase config object here so every device syncs automatically.
-// (Or paste it once per device on the Setup tab.) Leave null for single-device mode.
-const FB =  { apiKey: "AIzaSyDraKyn85ndIzYUcmZ_KSWkCL9TdmkiEl0",
-  authDomain: "scoutpatrol.firebaseapp.com",
-  databaseURL: "https://scoutpatrol-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "scoutpatrol",
-  storageBucket: "scoutpatrol.firebasestorage.app",
-  messagingSenderId: "296400673888",
-  appId: "1:296400673888:web:751fd1b441fe3b4808b705"
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PL Training Assessment</title>
+    <!-- HTML5 QR Code Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        :root { --primary: #7413dc; --bg: #f4f4f9; --text: #333; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0; }
+        header { background-color: var(--primary); color: white; padding: 1rem; text-align: center; }
+        nav { display: flex; justify-content: space-around; background: #ddd; padding: 10px; }
+        nav button { padding: 10px 20px; border: none; background: #ccc; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        nav button.active { background: var(--primary); color: white; }
+        .container { padding: 20px; max-width: 600px; margin: auto; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        select, input[type="text"], textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .criteria-row { background: white; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ddd; }
+        .radio-group { display: flex; gap: 15px; margin-top: 5px; }
+        .radio-group label { font-weight: normal; }
+        button.submit-btn { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        #reader { width: 100%; max-width: 400px; margin: 0 auto 15px auto; border-radius: 8px; overflow: hidden; }
+        .dashboard-card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ddd; }
+        .scout-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px; }
+        .badge { background: #28a745; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h2>PL Training Assessment</h2>
+    </header>
+
+    <nav>
+        <button id="nav-assess" class="active" onclick="switchTab('assess')">Assess</button>
+        <button id="nav-dash" onclick="switchTab('dashboard')">Live Dashboard</button>
+    </nav>
+
+    <div class="container">
+        <!-- ASSESS TAB -->
+        <div id="assess" class="tab-content active">
+            
+            <div class="form-group">
+                <label>Scan Scout QR Code (or select manually)</label>
+                <div id="reader"></div>
+                <select id="scoutSelect">
+                    <option value="">-- Manual Fallback: Select Scout --</option>
+                    <option value="P1-Joe">Joe Bloggs (Falcons)</option>
+                    <option value="P2-Raf">Rafael (Eagles)</option>
+                    <!-- Preload all scouts here -->
+                </select>
+                <p id="scoutConfirm" style="color: green; font-weight: bold; margin-top: 5px;"></p>
+            </div>
+
+            <div class="form-group">
+                <label>Assessor Name</label>
+                <input type="text" id="assessorName" placeholder="e.g. Akela">
+            </div>
+
+            <div class="form-group">
+                <label>Activity / Base</label>
+                <select id="activitySelect">
+                    <option value="">-- Select Activity --</option>
+                    <optgroup label="Instructing bases – Saturday am">
+                        <option value="Film Star">Film Star</option>
+                        <option value="Twisted fire starter">Twisted fire starter</option>
+                        <option value="All tied up">All tied up</option>
+                        <option value="All popped">All popped</option>
+                        <option value="Sticky Marshmallow">Sticky Marshmallow</option>
+                        <option value="Roasting time">Roasting time</option>
+                    </optgroup>
+                    <optgroup label="Teamwork and problem-solving bases – Saturday pm">
+                        <option value="Trauma tower">Trauma tower</option>
+                        <option value="Replication">Replication</option>
+                        <option value="Nuclear cleanup">Nuclear cleanup</option>
+                        <option value="Newspaper towers">Newspaper towers</option>
+                        <option value="Remote control shear legs">Remote control shear legs</option>
+                        <option value="Kim’s game">Kim’s game</option>
+                    </optgroup>
+                    <optgroup label="Inter patrol & Flagpole – Sunday">
+                        <option value="Inter patrol challenge">Inter patrol challenge</option>
+                        <option value="Flagpole teamwork challenge">Flagpole teamwork challenge</option>
+                        <option value="Spare one">Spare one</option>
+                        <option value="Spare two">Spare two</option>
+                        <option value="Spare three">Spare three</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div id="criteriaContainer"></div>
+
+            <div class="form-group">
+                <label>Other comments / evidence</label>
+                <textarea id="comments" rows="3"></textarea>
+            </div>
+
+            <button class="submit-btn" onclick="submitAssessment()">Submit Assessment</button>
+        </div>
+
+        <!-- DASHBOARD TAB -->
+        <div id="dashboard" class="tab-content">
+            <div style="margin-bottom: 20px;">
+                <button onclick="renderDashboard()" style="padding: 8px; width: 100%;">Refresh Live Data</button>
+            </div>
+            <div id="dashboardContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        const criteria = [
+            "PL took charge of the situation?",
+            "Clear instructions to all patrol members?",
+            "All patrol members clear about what they should be doing?",
+            "Tasks delegated fairly?",
+            "Checks progress of all patrol members & encourages them?",
+            "Sorts out any problems the patrol may have?",
+            "Everyone is taking an active part?",
+            "Views of other patrol members taken into account?",
+            "Risks assessed and communicated"
+        ];
+
+        let assessments = JSON.parse(localStorage.getItem('pl_assessments')) || [];
+        let html5QrcodeScanner;
+
+        // Initialize criteria form
+        const criteriaContainer = document.getElementById('criteriaContainer');
+        criteria.forEach((crit, index) => {
+            criteriaContainer.innerHTML += `
+                <div class="criteria-row">
+                    <label>${crit}</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="crit_${index}" value="Y"> Yes</label>
+                        <label><input type="radio" name="crit_${index}" value="N"> No</label>
+                        <label><input type="radio" name="crit_${index}" value="NOB" checked> Not observed</label>
+                    </div>
+                </div>
+            `;
+        });
+
+        // Tab Switching logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            
+            if(tabId === 'assess') {
+                document.getElementById('nav-assess').classList.add('active');
+                initScanner();
+            } else {
+                document.getElementById('nav-dash').classList.add('active');
+                if(html5QrcodeScanner) {
+                    html5QrcodeScanner.clear().catch(error => console.error("Failed to clear scanner", error));
+                }
+                renderDashboard();
             }
+        }
 
-const ACT = {
- "Sat am – Instructing bases":["Film Star","Twisted fire starter","All tied up","All popped","Sticky Marshmallow","Roasting time"],
- "Sat pm – Teamwork & problem-solving":["Trauma tower","Replication","Nuclear cleanup","Newspaper towers","Remote control shear legs","Kim's game"],
- "Sun am":["Inter patrol challenge","Flagpole teamwork challenge"],
- "Spare slots (interventions)":["Spare one","Spare two","Spare three"]};
-const CRIT = [
- ["Took charge","PL took charge of the situation?"],
- ["Clear instructions","Clear instructions to all patrol members?"],
- ["Patrol understood","All patrol members clear about what they should be doing?"],
- ["Fair delegation","Tasks delegated fairly?"],
- ["Checks & encourages","Checks progress of all patrol members & encourages them?"],
- ["Solves problems","Sorts out any problems the patrol may have?"],
- ["Everyone involved","Everyone is taking an active part?"],
- ["Views considered","Views of other patrol members taken into account?"],
- ["Risks assessed","Risks assessed and communicated"]];
+        // QR Scanner init
+        function initScanner() {
+            if(html5QrcodeScanner) return;
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
+            html5QrcodeScanner.render((decodedText) => {
+                document.getElementById('scoutSelect').value = decodedText; // Assumes QR text matches the <option> value
+                document.getElementById('scoutConfirm').innerText = `✓ Scout Identified: ${decodedText}`;
+                html5QrcodeScanner.pause();
+                setTimeout(() => html5QrcodeScanner.resume(), 3000); // pause so they don't scan twice by accident
+            }, (error) => {});
+        }
 
-const $=id=>document.getElementById(id);
-const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const key=c=>String(c).trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'_');
-const by=()=>localStorage.pltby||'';
-const fmt=t=>new Date(t).toLocaleString('en-GB',{weekday:'short',hour:'2-digit',minute:'2-digit'});
-let S=JSON.parse(localStorage.plt||'{"scouts":{},"as":{}}'),db=null,tab='assess',A=blank(),open=new Set(),sortBy='low',pf='',vw='grid';
-function blank(){return{act:A&&A.act||'',mp:'',s:null,ans:Array(9).fill(''),n:Array(9).fill(''),c:''}}
+        window.onload = () => { initScanner(); };
 
-(function(){
-let why='';
-(function(){
- let cfg=FB; try{cfg=cfg||JSON.parse(localStorage.pltfb||'null')}catch(e){}
- if(!cfg){why='no Firebase config in the file'}
- else if(typeof firebase==='undefined'){why='Firebase library did not load'}
- else{
-  try{firebase.initializeApp(cfg);db=firebase.database();
-   ['scouts','as'].forEach(k=>db.ref(k).on('value',s=>{S[k]=s.val()||{};
-    const f=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
-    if(tab!=='assess'||(!A.s&&!f))render()},e=>{why='database refused access: '+e.message;db=null;render()}))}
-  catch(e){why='error: '+e.message;db=null}}
-})();
+       // Paste your Google Web App URL here
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbziOAd3VLWhzGuzm9pWi5kz9AMgJhBXU0v5HjPOVdOYTHxniWF16W0QKC5ZzpBeQ5BLLg/exec"; 
 
-function put(k,id,v){
- if(db){v===null?db.ref(k+'/'+id).remove():db.ref(k+'/'+id).set(v)}
- else{if(v===null)delete S[k][id];else S[k][id]=v;localStorage.plt=JSON.stringify(S);render()}}
+async function submitAssessment() {
+    const scout = document.getElementById('scoutSelect').value;
+    const activity = document.getElementById('activitySelect').value;
+    const assessor = document.getElementById('assessorName').value;
+    const comments = document.getElementById('comments').value;
 
-function stats(id){
- const rs=Object.entries(S.as).map(([k,r])=>({...r,id:k})).filter(r=>r.s===id).sort((a,b)=>a.t<b.t?-1:1);
- const at=CRIT.map(()=>({y:0,n:0,o:0}));
- rs.forEach(r=>[...r.a].forEach((v,i)=>{if(at[i])at[i][v.toLowerCase()]++}));
- const ys=at.reduce((s,x)=>s+x.y,0),ob=ys+at.reduce((s,x)=>s+x.n,0);
- return{rs,at,dem:at.filter(x=>x.y).length,pct:ob?Math.round(100*ys/ob):null}}
+    if(!scout || !activity || !assessor) {
+        alert("Please fill in Scout, Assessor, and Activity.");
+        return;
+    }
 
-function go(t){tab=t;render();scrollTo(0,0)}
-function render(){
- $('app').innerHTML=({assess:vAssess,dash:vDash,roster:vRoster,setup:vSetup,badges:vBadges})[tab]();
- document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===(tab==='badges'?'roster':tab)));
- $('mode').className=db?'':'l';
- $('mode').textContent=db?'● Live – shared across devices':'⚠ This device only – not shared (see Setup)';}
+    let results = [];
+    let yCount = 0;
+    criteria.forEach((crit, index) => {
+        const val = document.querySelector(`input[name="crit_${index}"]:checked`).value;
+        results.push({ criterion: crit, score: val });
+        if(val === 'Y') yCount++;
+    });
 
-/* ---------- Assess ---------- */
-function vAssess(){
- const sc=A.s&&S.scouts[A.s];
- let h=`<div class=card><label>Your name (assessor)</label><input id=by value="${esc(by())}" oninput="localStorage.pltby=this.value">
- <label>Activity / base</label><select onchange="A.act=this.value"><option value="">Choose activity…</option>${Object.entries(ACT).map(([g,l])=>`<optgroup label="${esc(g)}">${l.map(a=>`<option ${A.act===a?'selected':''}>${esc(a)}</option>`).join('')}</optgroup>`).join('')}</select></div>`;
- if(!sc){
-  const all=Object.entries(S.scouts),pats=[...new Set(all.map(([,s])=>s.patrol||'(no patrol)'))].sort();
-  const list=all.filter(([,s])=>!A.mp||(s.patrol||'(no patrol)')===A.mp).sort((a,b)=>a[1].name.localeCompare(b[1].name));
-  return h+`<button class="gold big" onclick="startScan()">Scan PL's QR code</button>
-  <div class=card style="margin-top:12px"><b>Can't scan? Pick the Scout</b>
-  <label>Patrol</label><select onchange="A.mp=this.value;render()"><option value="">All patrols</option>${pats.map(p=>`<option ${A.mp===p?'selected':''}>${esc(p)}</option>`).join('')}</select>
-  <label>Scout</label><select onchange="if(this.value)pick(this.value)"><option value="">Choose Scout…</option>${list.map(([id,s])=>`<option value="${id}">${esc(s.name)}${A.mp?'':' – '+esc(s.patrol||'no patrol')}</option>`).join('')}</select>
-  ${all.length?'':'<p class=pt>No Scouts loaded yet – add them on the Scouts tab.</p>'}</div>`}
- const prev=stats(A.s).rs,dup=prev.filter(r=>r.act===A.act).length;
- h+=`<div class=who><b>${esc(sc.name)}</b><span>${esc(sc.patrol||'No patrol')}</span><small>${esc(A.act)} · PL turn ${prev.length+1}</small></div>`;
- if(dup)h+=`<div class=warn>This Scout has already been assessed at ${esc(A.act)}.</div>`;
- h+=`<div class=card>${CRIT.map((c,i)=>`<div class=row id=r${i}><div class=q>${esc(c[1])}</div><div class=btns>${[['Y','Yes'],['N','No'],['O','Not observed']].map(([v,l])=>`<button class="${v}${A.ans[i]===v?' on':''}" data-v=${v} onclick="ans(${i},'${v}')">${l}</button>`).join('')}</div><input class=nt placeholder="Evidence (optional)" value="${esc(A.n[i])}" oninput="A.n[${i}]=this.value"></div>`).join('')}
- <label>Other comments</label><textarea oninput="A.c=this.value">${esc(A.c)}</textarea></div>
- <button class="p big" onclick="submit()">Save assessment</button>
- <div class=two style="margin-top:10px"><button onclick="A.ans=A.ans.map(x=>x||'O');render()">Rest = not observed</button><button onclick="A.s=null;render()">Wrong Scout / cancel</button></div>`;
- return h}
+    const record = { scout, activity, assessor, results, yCount, comments };
+    const submitBtn = document.querySelector('.submit-btn');
+    submitBtn.innerText = "Submitting...";
+    submitBtn.disabled = true;
 
-function pick(id){
- if(!A.act||!by().trim()){alert('Choose your name and the activity first.');render();return}
- const sc=S.scouts[id];A.s=id;A.ans=Array(9).fill('');A.n=Array(9).fill('');A.c='';render();scrollTo(0,0)}
-function ans(i,v){
- A.ans[i]=A.ans[i]===v?'':v;
- document.querySelectorAll('#r'+i+' button').forEach(b=>b.classList.toggle('on',b.dataset.v===A.ans[i]))}
-function submit(){
- const miss=A.ans.filter(x=>!x).length;
- if(miss){alert(miss+' attribute(s) still unanswered. Use "Not observed" if you did not see it.');return}
- const sc=S.scouts[A.s],id=Date.now().toString(36)+Math.random().toString(36).slice(2,5);
- put('as',id,{s:A.s,nm:sc.name,pt:sc.patrol||'',act:A.act,by:by(),t:new Date().toISOString(),a:A.ans.join(''),
-  n:Object.fromEntries(A.n.map((x,i)=>[i,x.trim()]).filter(x=>x[1])),c:A.c.trim()});
- toast('Saved: '+sc.name);A=blank();render();scrollTo(0,0)}
-function toast(m){const d=document.createElement('div');d.className='toast';d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2200)}
+    try {
+        await fetch(WEB_APP_URL, {
+            method: "POST",
+            body: JSON.stringify(record)
+        });
+        
+        alert("Assessment saved to live dashboard!");
+        document.getElementById('scoutConfirm').innerText = "";
+        document.getElementById('scoutSelect').value = "";
+        document.getElementById('comments').value = "";
+        criteria.forEach((crit, index) => {
+            document.querySelector(`input[name="crit_${index}"][value="NOB"]`).checked = true;
+        });
+    } catch (error) {
+        alert("Error saving. Please check your internet connection.");
+        console.error(error);
+    } finally {
+        submitBtn.innerText = "Submit Assessment";
+        submitBtn.disabled = false;
+    }
+}
 
-/* ---------- QR scanner ---------- */
-let stream,raf;
-async function startScan(){
- if(!A.act||!by().trim()){alert('Choose your name and the activity first.');return}
- if(typeof jsQR==='undefined'){alert('Scanner not loaded (no internet?). Pick the Scout manually.');return}
- try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})}
- catch(e){alert('Camera not available. Allow camera access, or pick the Scout manually.');return}
- $('scan').hidden=false;$('smsg').textContent="Point the camera at the Scout's QR code";
- const v=$('vid');v.srcObject=stream;await v.play();
- const c=document.createElement('canvas'),x=c.getContext('2d',{willReadFrequently:true});
- const tick=()=>{if(!stream)return;
-  if(v.readyState===4&&v.videoWidth){c.width=v.videoWidth;c.height=v.videoHeight;x.drawImage(v,0,0);
-   const d=x.getImageData(0,0,c.width,c.height),r=jsQR(d.data,d.width,d.height);
-   if(r&&r.data){const id=key(r.data);if(S.scouts[id]){stopScan();pick(id);return}$('smsg').textContent='Not recognised: '+r.data}}
-  raf=requestAnimationFrame(tick)};tick()}
-function stopScan(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;cancelAnimationFrame(raf);$('scan').hidden=true}
+async function renderDashboard() {
+    const dash = document.getElementById('dashboardContainer');
+    dash.innerHTML = "<p>Loading live data from server...</p>";
 
-/* ---------- Dashboard ---------- */
-function vDash(){
- const all=Object.entries(S.scouts).map(([id,s])=>({id,s,...stats(id)}));
- const pats=[...new Set(all.map(x=>x.s.patrol||'(no patrol)'))].sort();
- let L=all.filter(x=>!pf||(x.s.patrol||'(no patrol)')===pf);
- const nm=(a,b)=>a.s.name.localeCompare(b.s.name);
- L.sort(sortBy==='low'?(a,b)=>a.dem-b.dem||nm(a,b):sortBy==='pat'?(a,b)=>(a.s.patrol||'').localeCompare(b.s.patrol||'')||nm(a,b):nm);
- let h=`<h2>Live progress</h2><div class=card><div class=two><select onchange="sortBy=this.value;render()"><option value=low ${sortBy=='low'?'selected':''}>Fewest attributes first</option><option value=pat ${sortBy=='pat'?'selected':''}>By patrol</option><option value=name ${sortBy=='name'?'selected':''}>By name</option></select>
- <select onchange="pf=this.value;render()"><option value="">All patrols</option>${pats.map(p=>`<option ${pf===p?'selected':''}>${esc(p)}</option>`).join('')}</select></div>
- <div class=two style="margin-top:8px"><button class="${vw=='grid'?'p':''}" onclick="vw='grid';render()">Grid</button><button class="${vw=='cards'?'p':''}" onclick="vw='cards';render()">Cards</button></div>
- <p class=pt>${all.length} Scouts · ${Object.keys(S.as).length} assessments · ${all.filter(x=>!x.rs.length).length} not yet assessed</p></div>`;
- if(!all.length)return h+'<p>No Scouts yet. Add them on the Scouts tab.</p>';
- if(vw==='grid'){
-  h+=`<div class="card grid"><table><tr><th>Scout</th>${CRIT.map((c,i)=>`<th>${i+1}</th>`).join('')}<th>Done</th></tr>${L.map(x=>`<tr><td>${esc(x.s.name)}</td>${x.at.map(a=>a.y?`<td class=cy>✓</td>`:a.n?`<td class=cn>✗</td>`:`<td class=co>·</td>`).join('')}<td><b>${x.dem}/9</b></td></tr>`).join('')}</table></div>
-  <div class=card style="font-size:13px"><b>Key:</b> ✓ shown at least once · ✗ only "No" so far · · not observed yet<br>${CRIT.map((c,i)=>`${i+1} ${esc(c[0])}`).join(' · ')}</div>`;}
- else h+=L.map(x=>`<details class=card ${open.has(x.id)?'open':''} ontoggle="this.open?open.add('${x.id}'):open.delete('${x.id}')"><summary>
-  <div class=top><b>${esc(x.s.name)}</b><span class=pt>${esc(x.s.patrol||'')}</span></div>
-  <div class=bar><i style="width:${x.dem/9*100}%"></i></div>
-  <div><b>${x.dem}/9</b> attributes demonstrated · ${x.pct==null?'–':x.pct+'% Yes'} · ${x.rs.length} turn${x.rs.length==1?'':'s'}</div></summary>
-  <div style="margin-top:8px">${x.at.map((a,i)=>`<div class="at ${a.y?'y':a.n?'n':'o'}"><s>${a.y?'✓':a.n?'✗':'○'}</s><span>${esc(CRIT[i][0])} <small>(${a.y} yes, ${a.n} no)</small></span></div>`).join('')}</div>
-  ${x.rs.map(r=>`<div class=h>${fmt(r.t)} · ${esc(r.act)} · ${esc(r.by)}${r.c?'<br>“'+esc(r.c)+'”':''}${Object.entries(r.n||{}).map(([i,t])=>`<br>${esc(CRIT[i][0])}: ${esc(t)}`).join('')}<a onclick="delA('${r.id}')">delete</a></div>`).join('')}</details>`).join('');
- return h}
-function delA(id){if(confirm('Delete this assessment?'))put('as',id,null)}
+    try {
+        const response = await fetch(WEB_APP_URL);
+        const assessments = await response.json();
 
-/* ---------- Roster ---------- */
-function vRoster(){
- const all=Object.entries(S.scouts),pats=[...new Set(all.map(([,s])=>s.patrol).filter(Boolean))].sort();
- const grp={};all.forEach(([id,s])=>(grp[s.patrol||'(no patrol)']=grp[s.patrol||'(no patrol)']||[]).push([id,s]));
- return `<h2>Scouts & patrols</h2><div class=card><label>Add Scouts – one per line: Name, Patrol, QR code (code optional)</label>
- <textarea id=bulk placeholder="Joe Bloggs, Falcons&#10;Rafael Smith, Eagles, P7"></textarea>
- <div class=two style="margin-top:8px"><button class=p onclick="addBulk()">Add Scouts</button><button onclick="go('badges')">QR badges</button></div>
- <p class=pt>Without a code, one is made (S01, S02…). To reuse your old QR codes, give each Scout the exact text their code holds, as long as it is unique per Scout.</p></div>
- <datalist id=pl>${pats.map(p=>`<option value="${esc(p)}">`).join('')}</datalist>
- ${Object.keys(grp).sort().map(p=>`<div class=card><b>${esc(p)}</b> <span class=pt>(${grp[p].length})</span>${grp[p].sort((a,b)=>a[1].name.localeCompare(b[1].name)).map(([id,s])=>`<div class=row><input value="${esc(s.name)}" onchange="ed('${id}','name',this.value)"><div class=two style="margin-top:6px"><input list=pl value="${esc(s.patrol||'')}" placeholder="Patrol" onchange="ed('${id}','patrol',this.value)"><button onclick="delS('${id}')">Remove ${esc(s.code||id)}</button></div></div>`).join('')}</div>`).join('')}`}
-function addBulk(){
- const lines=$('bulk').value.split('\n').map(l=>l.trim()).filter(Boolean);let n=Object.keys(S.scouts).length;
- lines.forEach(l=>{const [name,patrol,cd]=l.split(/[,\t]/).map(x=>x.trim());
-  let code=cd;if(!code){do{n++;code='S'+String(n).padStart(2,'0')}while(S.scouts[key(code)])}
-  put('scouts',key(code),{name,patrol:patrol||'',code})});
- if(lines.length)toast('Added '+lines.length)}
-function ed(id,f,v){put('scouts',id,{...S.scouts[id],[f]:v.trim()})}
-function delS(id){if(confirm('Remove '+S.scouts[id].name+'? Their past assessments are kept.'))put('scouts',id,null)}
+        if(assessments.length === 0) {
+            dash.innerHTML = "<p>No assessments recorded yet.</p>";
+            return;
+        }
 
-function vBadges(){
- const L=Object.values(S.scouts).sort((a,b)=>a.name.localeCompare(b.name));
- return `<div class="noprint two"><button onclick="go('roster')">Back</button><button class=p onclick="print()">Print</button></div><h2 class=noprint>QR badges</h2>
- <div class=badges>${L.map(s=>{const q=qrcode(0,'M');q.addData(s.code);q.make();return `<div class=bd>${q.createSvgTag(4,0)}<b>${esc(s.name)}</b><small>${esc(s.code)}</small></div>`}).join('')}</div>`}
+        dash.innerHTML = "";
+        const grouped = {};
+        assessments.forEach(a => {
+            if(!grouped[a.scout]) grouped[a.scout] = [];
+            grouped[a.scout].push(a);
+        });
 
-/* ---------- Setup ---------- */
-function vSetup(){
- return `<h2>Setup</h2><div class=card><b>Sharing between devices</b>
- <p class=pt>${db?'Live sync is ON.':'Currently saving on this device only. Paste a Firebase config to share data between assessors and the dashboard.'}</p>
- <textarea id=fbc placeholder="{ apiKey: '…', databaseURL: '…', projectId: '…' }"></textarea>
- <div class=two style="margin-top:8px"><button class=p onclick="saveFb()">Save & reload</button><button onclick="localStorage.removeItem('pltfb');location.reload()">Turn off sync</button></div></div>
- <div class=card><b>Export</b><div class=two style="margin-top:8px"><button onclick="csv()">Download CSV</button><button onclick="dl('pl-backup.json',JSON.stringify(S),'application/json')">Backup JSON</button></div></div>
- <div class=card><b>Clear</b><p class=pt>Removes every assessment, keeps the Scouts.</p><button onclick="clr()">Clear all assessments</button></div>`}
-function saveFb(){
- try{const c=new Function('return ('+$('fbc').value+')')();if(!c.databaseURL)throw 0;localStorage.pltfb=JSON.stringify(c);location.reload()}
- catch(e){alert('Could not read that. Paste the whole config object, including databaseURL.')}}
-function clr(){if(prompt('Type DELETE to remove all assessments')==='DELETE'){if(db)db.ref('as').remove();else{S.as={};localStorage.plt=JSON.stringify(S);render()}}}
-function dl(n,t,m){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:m}));a.download=n;a.click()}
-function csv(){
- const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
- const rows=[['Time','Scout','Patrol','Activity','Assessor',...CRIT.map(c=>c[0]),'Evidence','Comments']];
- Object.values(S.as).sort((a,b)=>a.t<b.t?-1:1).forEach(r=>rows.push([r.t,r.nm,r.pt,r.act,r.by,...[...r.a].map(v=>({Y:'Yes',N:'No',O:'Not observed'})[v]),Object.entries(r.n||{}).map(([i,t])=>CRIT[i][0]+': '+t).join('; '),r.c]));
- dl('pl-assessments.csv',rows.map(r=>r.map(q).join(',')).join('\n'),'text/csv')}
+        for (const [scoutName, records] of Object.entries(grouped)) {
+            let demonstratedCriteria = new Set();
+            records.forEach(rec => {
+                rec.results.forEach(res => {
+                    if(res.score === 'Y') demonstratedCriteria.add(res.criterion);
+                });
+            });
 
-render();
-$('mode').textContent=db?'● Live – shared across devices':'⚠ This device only – '+why;
-</script></body></html>
+            let totalScore = demonstratedCriteria.size;
+            let pct = Math.round((totalScore / 9) * 100);
+            
+            let criteriaHtml = "<ul style='padding-left: 20px;'>";
+            criteria.forEach(crit => {
+                if(demonstratedCriteria.has(crit)) {
+                    criteriaHtml += `<li style="color: green; margin-bottom: 5px;">✓ ${crit}</li>`;
+                } else {
+                    criteriaHtml += `<li style="color: gray; margin-bottom: 5px;">○ ${crit}</li>`;
+                }
+            });
+            criteriaHtml += "</ul>";
+
+            dash.innerHTML += `
+                <div class="dashboard-card">
+                    <div class="scout-header">
+                        <h3 style="margin: 0;">${scoutName}</h3>
+                        <span class="badge">${totalScore}/9 Attributes (${pct}%)</span>
+                    </div>
+                    <p style="font-size: 13px; color: #666; margin-top: 0;">Assessed at: ${records.map(r => r.activity).join(', ')}</p>
+                    ${criteriaHtml}
+                </div>
+            `;
+        }
+    } catch (error) {
+        dash.innerHTML = "<p style='color: red;'>Failed to load data. Please check your connection.</p>";
+        console.error(error);
+    }
+}
+        }
+    </script>
+</body>
+</html>
