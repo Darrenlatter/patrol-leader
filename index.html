@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PL Training Assessment</title>
     
-    <!-- QR Code Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <!-- QR Code Generator Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     
     <style>
@@ -15,13 +13,12 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0; }
         header { background-color: var(--primary); color: white; padding: 1rem; text-align: center; }
         nav { display: flex; justify-content: space-around; background: #ddd; padding: 10px; flex-wrap: wrap; gap: 5px; }
-        nav button { flex-grow: 1; padding: 10px; border: none; background: #ccc; cursor: pointer; border-radius: 5px; font-weight: bold; font-size: 14px; }
+        nav button { flex-grow: 1; padding: 10px; border: none; background: #ccc; cursor: pointer; border-radius: 5px; font-weight: bold; font-size: 14px; min-width: 80px; }
         nav button.active { background: var(--primary); color: white; }
         .container { padding: 20px; max-width: 600px; margin: auto; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         
-        /* Form & Assessment Styles */
         .form-group { margin-bottom: 15px; }
         label { display: block; font-weight: bold; margin-bottom: 5px; }
         select, input[type="text"], textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
@@ -31,12 +28,10 @@
         button.action-btn { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin-bottom: 10px; }
         #reader { width: 100%; max-width: 400px; margin: 0 auto 15px auto; border-radius: 8px; overflow: hidden; }
         
-        /* Dashboard Styles */
         .dashboard-card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ddd; }
         .scout-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px; }
         .badge { background: #28a745; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
         
-        /* Admin Styles */
         .admin-section { background: white; padding: 15px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 20px; }
         .admin-section h3 { margin-top: 0; border-bottom: 2px solid var(--primary); padding-bottom: 5px; }
         .list-group { list-style: none; padding: 0; margin: 10px 0; max-height: 200px; overflow-y: auto; }
@@ -44,7 +39,6 @@
         .delete-btn { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
         .flex-row { display: flex; gap: 10px; margin-bottom: 10px; }
         
-        /* Print Styles for QR Codes */
         #printArea { display: none; }
         @media print {
             body * { visibility: hidden; }
@@ -65,6 +59,7 @@
 
     <nav>
         <button id="nav-assess" class="active" onclick="switchTab('assess')">Assess</button>
+        <button id="nav-history" onclick="switchTab('history')">History</button>
         <button id="nav-dash" onclick="switchTab('dashboard')">Live Dashboard</button>
         <button id="nav-admin" onclick="switchTab('admin')">Manage & QR</button>
     </nav>
@@ -73,6 +68,10 @@
         
         <!-- 1. ASSESS TAB -->
         <div id="assess" class="tab-content active">
+            <div id="editWarning" style="display:none; background: #ffeb3b; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-weight: bold; text-align: center;">
+                Editing an Existing Assessment <button onclick="cancelEdit()" style="margin-left: 10px;">Cancel</button>
+            </div>
+
             <div class="form-group">
                 <label>Scan Scout QR Code (or select manually)</label>
                 <div id="reader"></div>
@@ -104,7 +103,17 @@
             <button class="action-btn submit-btn" onclick="submitAssessment()">Submit Assessment</button>
         </div>
 
-        <!-- 2. DASHBOARD TAB -->
+        <!-- 2. HISTORY TAB -->
+        <div id="history" class="tab-content">
+            <div style="margin-bottom: 20px;">
+                <button class="action-btn" style="background: #333;" onclick="loadHistory()">Refresh History</button>
+            </div>
+            <div id="historyContainer">
+                <p>Click "Refresh History" to load past submissions.</p>
+            </div>
+        </div>
+
+        <!-- 3. DASHBOARD TAB -->
         <div id="dashboard" class="tab-content">
             <div style="margin-bottom: 20px;">
                 <button class="action-btn" style="background: #333;" onclick="renderDashboard()">Refresh Live Data</button>
@@ -114,14 +123,13 @@
             </div>
         </div>
 
-        <!-- 3. MANAGE & QR TAB -->
+        <!-- 4. MANAGE & QR TAB -->
         <div id="admin" class="tab-content">
-            
             <div class="admin-section">
                 <h3>Manage Scouts</h3>
                 <div class="flex-row">
-                    <input type="text" id="newScoutName" placeholder="Scout Name (e.g. Joe Bloggs)">
-                    <input type="text" id="newScoutPatrol" placeholder="Patrol (e.g. Falcons)">
+                    <input type="text" id="newScoutName" placeholder="Scout Name">
+                    <input type="text" id="newScoutPatrol" placeholder="Patrol">
                 </div>
                 <button class="action-btn" style="padding: 10px;" onclick="addScout()">Add Scout</button>
                 <ul id="adminScoutList" class="list-group"></ul>
@@ -136,7 +144,6 @@
                 <button class="action-btn" style="padding: 10px;" onclick="addActivity()">Add Activity</button>
                 <ul id="adminActivityList" class="list-group"></ul>
             </div>
-
         </div>
 
     </div>
@@ -160,7 +167,6 @@
             "Risks assessed and communicated"
         ];
 
-        // Load configured data from LocalStorage or use Defaults
         let configuredScouts = JSON.parse(localStorage.getItem('pl_scouts')) || [];
         let configuredActivities = JSON.parse(localStorage.getItem('pl_activities')) || [
             "Film Star", "Twisted fire starter", "All tied up", "All popped", 
@@ -171,8 +177,9 @@
         ];
 
         let html5QrcodeScanner = null;
+        let globalAssessments = [];
+        let editingAssessmentId = null;
 
-        // 1. Initialise App
         window.onload = () => { 
             buildCriteriaForm();
             refreshDropdownsAndLists();
@@ -195,42 +202,29 @@
             });
         }
 
-        // 2. Data Management (Admin functions)
         function refreshDropdownsAndLists() {
-            // Update Assess Dropdowns
             const scoutSelect = document.getElementById('scoutSelect');
             const activitySelect = document.getElementById('activitySelect');
             
             scoutSelect.innerHTML = '<option value="">-- Manual Fallback: Select Scout --</option>';
-            configuredScouts.forEach((s, index) => {
-                const label = `${s.name} (${s.patrol})`;
-                scoutSelect.innerHTML += `<option value="${label}">${label}</option>`;
-            });
+            configuredScouts.forEach(s => scoutSelect.innerHTML += `<option value="${s.name} (${s.patrol})">${s.name} (${s.patrol})</option>`);
 
             activitySelect.innerHTML = '<option value="">-- Select Activity --</option>';
-            configuredActivities.forEach((act, index) => {
-                activitySelect.innerHTML += `<option value="${act}">${act}</option>`;
-            });
+            configuredActivities.forEach(act => activitySelect.innerHTML += `<option value="${act}">${act}</option>`);
 
-            // Update Admin Lists
             const adminScoutList = document.getElementById('adminScoutList');
             adminScoutList.innerHTML = '';
-            configuredScouts.forEach((s, index) => {
-                adminScoutList.innerHTML += `<li>${s.name} - ${s.patrol} <button class="delete-btn" onclick="deleteScout(${index})">X</button></li>`;
-            });
+            configuredScouts.forEach((s, index) => adminScoutList.innerHTML += `<li>${s.name} - ${s.patrol} <button class="delete-btn" onclick="deleteScout(${index})">X</button></li>`);
 
             const adminActivityList = document.getElementById('adminActivityList');
             adminActivityList.innerHTML = '';
-            configuredActivities.forEach((act, index) => {
-                adminActivityList.innerHTML += `<li>${act} <button class="delete-btn" onclick="deleteActivity(${index})">X</button></li>`;
-            });
+            configuredActivities.forEach((act, index) => adminActivityList.innerHTML += `<li>${act} <button class="delete-btn" onclick="deleteActivity(${index})">X</button></li>`);
         }
 
         function addScout() {
             const name = document.getElementById('newScoutName').value.trim();
             const patrol = document.getElementById('newScoutPatrol').value.trim();
             if(!name || !patrol) return alert("Please enter both Name and Patrol.");
-            
             configuredScouts.push({ name, patrol });
             localStorage.setItem('pl_scouts', JSON.stringify(configuredScouts));
             document.getElementById('newScoutName').value = "";
@@ -247,7 +241,6 @@
         function addActivity() {
             const act = document.getElementById('newActivityName').value.trim();
             if(!act) return;
-            
             configuredActivities.push(act);
             localStorage.setItem('pl_activities', JSON.stringify(configuredActivities));
             document.getElementById('newActivityName').value = "";
@@ -260,83 +253,59 @@
             refreshDropdownsAndLists();
         }
 
-        // 3. Print QR Codes
         function printQRCodes() {
-            if(configuredScouts.length === 0) {
-                return alert("Add some Scouts first before printing QR codes.");
-            }
-
+            if(configuredScouts.length === 0) return alert("Add some Scouts first.");
             const printArea = document.getElementById('printArea');
             printArea.innerHTML = '';
 
             configuredScouts.forEach(scout => {
-                const qrValue = `${scout.name} (${scout.patrol})`;
-                
                 const card = document.createElement('div');
                 card.className = 'qr-card';
-                
                 const canvas = document.createElement('canvas');
-                new QRious({ element: canvas, value: qrValue, size: 150 });
-                
+                new QRious({ element: canvas, value: `${scout.name} (${scout.patrol})`, size: 150 });
                 card.appendChild(canvas);
                 card.innerHTML += `<h4>${scout.name}</h4><p>${scout.patrol}</p>`;
                 printArea.appendChild(card);
             });
-
             window.print();
         }
 
-        // 4. Tab Switching
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             
-            if (tabId === 'assess') {
-                document.getElementById('nav-assess').classList.add('active');
-            } else if (tabId === 'dashboard') {
-                document.getElementById('nav-dash').classList.add('active');
-                renderDashboard();
-            } else if (tabId === 'admin') {
-                document.getElementById('nav-admin').classList.add('active');
-            }
+            if (tabId === 'assess') document.getElementById('nav-assess').classList.add('active');
+            else if (tabId === 'history') { document.getElementById('nav-history').classList.add('active'); loadHistory(); }
+            else if (tabId === 'dashboard') { document.getElementById('nav-dash').classList.add('active'); renderDashboard(); }
+            else if (tabId === 'admin') document.getElementById('nav-admin').classList.add('active');
         }
 
-        // 5. Scanner Initialisation
         function initScanner() {
             try {
                 if (!html5QrcodeScanner) {
                     html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
                     html5QrcodeScanner.render((decodedText) => {
                         const select = document.getElementById('scoutSelect');
-                        
-                        // If the scanned scout isn't in this device's dropdown, add them dynamically so it can be submitted!
-                        if (!Array.from(select.options).some(opt => opt.value === decodedText)) {
-                            select.add(new Option(decodedText, decodedText));
-                        }
-                        
+                        if (!Array.from(select.options).some(opt => opt.value === decodedText)) select.add(new Option(decodedText, decodedText));
                         select.value = decodedText; 
                         document.getElementById('scoutConfirm').innerText = `✓ Scout Locked: ${decodedText}`;
-                        
                         html5QrcodeScanner.pause();
                         setTimeout(() => html5QrcodeScanner.resume(), 3000); 
-                    }, (error) => {});
+                    }, () => {});
                 }
-            } catch (e) {
-                console.error("Camera error:", e);
-            }
+            } catch (e) { console.error(e); }
         }
 
-        // 6. Submit Assessment
+        // ---------- EDIT & DELETE LOGIC ---------- //
+
         async function submitAssessment() {
             const scout = document.getElementById('scoutSelect').value;
             const activity = document.getElementById('activitySelect').value;
             const assessor = document.getElementById('assessorName').value;
             const comments = document.getElementById('comments').value;
 
-            if(!scout || !activity || !assessor) {
-                return alert("Please fill in Scout, Assessor, and Activity.");
-            }
+            if(!scout || !activity || !assessor) return alert("Please fill in Scout, Assessor, and Activity.");
 
             let results = [];
             let yCount = 0;
@@ -346,26 +315,27 @@
                 if(val === 'Y') yCount++;
             });
 
-            const record = { scout, activity, assessor, results, yCount, comments };
+            // Set the ID to the one being edited, OR generate a new timestamp string for a new assessment
+            const recordId = editingAssessmentId || new Date().getTime().toString();
+            const record = { id: recordId, scout, activity, assessor, results, yCount, comments };
+            
+            const payload = {
+                action: editingAssessmentId ? "edit" : "add",
+                record: record
+            };
+
             const submitBtn = document.querySelector('.submit-btn');
             submitBtn.innerText = "Submitting to Server...";
             submitBtn.disabled = true;
 
             try {
                 await fetch(WEB_APP_URL, {
-                    method: "POST",
-                    mode: "no-cors", 
-                    headers: { "Content-Type": "text/plain" },
-                    body: JSON.stringify(record)
+                    method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify(payload)
                 });
                 
-                alert("Assessment saved successfully!");
-                document.getElementById('scoutConfirm').innerText = "";
-                document.getElementById('scoutSelect').value = "";
-                document.getElementById('comments').value = "";
-                criteria.forEach((crit, index) => {
-                    document.querySelector(`input[name="crit_${index}"][value="NOB"]`).checked = true;
-                });
+                alert(editingAssessmentId ? "Assessment Updated!" : "Assessment Saved!");
+                cancelEdit(); // Resets form and UI state
             } catch (error) {
                 alert("Failed to submit. Please check your internet connection.");
             } finally {
@@ -374,49 +344,129 @@
             }
         }
 
-        // 7. Render Dashboard
+        async function loadHistory() {
+            const hist = document.getElementById('historyContainer');
+            hist.innerHTML = "<p style='text-align:center;'>Fetching history from server...</p>";
+            try {
+                const response = await fetch(WEB_APP_URL);
+                globalAssessments = await response.json();
+                
+                if(globalAssessments.length === 0) {
+                    hist.innerHTML = "<p style='text-align:center;'>No assessments recorded yet.</p>";
+                    return;
+                }
+                
+                hist.innerHTML = "";
+                // Render newest first
+                [...globalAssessments].reverse().forEach(a => {
+                    const timeString = new Date(a.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const isEditable = a.id ? true : false; 
+                    
+                    hist.innerHTML += `
+                        <div class="dashboard-card" style="border-left: 4px solid var(--primary);">
+                            <div style="display:flex; justify-content: space-between; align-items: center;">
+                                <strong style="font-size:16px;">${a.scout}</strong>
+                                <span style="font-size: 12px; color: #666;">${timeString}</span>
+                            </div>
+                            <p style="margin: 5px 0 10px 0; font-size: 14px; color: #444;">${a.activity} (Assessor: ${a.assessor})</p>
+                            ${isEditable ? `
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="action-btn" style="padding: 8px; margin: 0; background: #17a2b8;" onclick="startEdit('${a.id}')">Edit</button>
+                                    <button class="action-btn" style="padding: 8px; margin: 0; background: #dc3545;" onclick="deleteAssessment('${a.id}')">Delete</button>
+                                </div>
+                            ` : `<p style="font-size:11px; color:#999; margin:0;">Legacy record (Cannot edit from app)</p>`}
+                        </div>
+                    `;
+                });
+            } catch (error) { hist.innerHTML = "<p style='color:red; text-align:center;'>Failed to load history.</p>"; }
+        }
+
+        function startEdit(id) {
+            const record = globalAssessments.find(a => a.id == id);
+            if(!record) return;
+            
+            editingAssessmentId = id;
+            document.getElementById('editWarning').style.display = 'block';
+            document.querySelector('.submit-btn').innerText = "Update Assessment";
+            document.querySelector('.submit-btn').style.background = "#17a2b8";
+            
+            // Populate form
+            const select = document.getElementById('scoutSelect');
+            if (!Array.from(select.options).some(opt => opt.value === record.scout)) select.add(new Option(record.scout, record.scout));
+            select.value = record.scout;
+            
+            document.getElementById('assessorName').value = record.assessor;
+            document.getElementById('activitySelect').value = record.activity;
+            document.getElementById('comments').value = record.comments;
+            
+            record.results.forEach((res, index) => {
+                const radio = document.querySelector(`input[name="crit_${index}"][value="${res.score}"]`);
+                if(radio) radio.checked = true;
+            });
+            
+            switchTab('assess');
+        }
+
+        function cancelEdit() {
+            editingAssessmentId = null;
+            document.getElementById('editWarning').style.display = 'none';
+            document.querySelector('.submit-btn').innerText = "Submit Assessment";
+            document.querySelector('.submit-btn').style.background = "var(--primary)";
+            
+            // Clear form
+            document.getElementById('scoutConfirm').innerText = "";
+            document.getElementById('scoutSelect').value = "";
+            document.getElementById('comments').value = "";
+            criteria.forEach((crit, index) => document.querySelector(`input[name="crit_${index}"][value="NOB"]`).checked = true);
+        }
+
+        async function deleteAssessment(id) {
+            if(!confirm("Are you sure you want to delete this assessment? This cannot be undone.")) return;
+            
+            try {
+                await fetch(WEB_APP_URL, {
+                    method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify({ action: "delete", id: id })
+                });
+                alert("Assessment Deleted!");
+                loadHistory(); // Reload list
+            } catch (error) {
+                alert("Failed to delete. Check your connection.");
+            }
+        }
+
+        // ---------- DASHBOARD ---------- //
+
         async function renderDashboard() {
             const dash = document.getElementById('dashboardContainer');
-            dash.innerHTML = "<p style='text-align:center;'>Fetching live data from Google Sheets...</p>";
+            dash.innerHTML = "<p style='text-align:center;'>Fetching live data from server...</p>";
 
             try {
                 const response = await fetch(WEB_APP_URL);
-                const assessments = await response.json();
+                globalAssessments = await response.json();
 
-                if(!assessments || assessments.length === 0) {
-                    dash.innerHTML = "<p style='text-align:center;'>No assessments have been recorded yet.</p>";
-                    return;
-                }
+                if(globalAssessments.length === 0) { dash.innerHTML = "<p style='text-align:center;'>No assessments recorded yet.</p>"; return; }
 
                 dash.innerHTML = "";
                 const grouped = {};
-                assessments.forEach(a => {
+                globalAssessments.forEach(a => {
                     if(!grouped[a.scout]) grouped[a.scout] = [];
                     grouped[a.scout].push(a);
                 });
 
                 for (const [scoutName, records] of Object.entries(grouped)) {
                     let demonstratedCriteria = new Set();
-                    records.forEach(rec => {
-                        rec.results.forEach(res => {
-                            if(res.score === 'Y') demonstratedCriteria.add(res.criterion);
-                        });
-                    });
+                    records.forEach(rec => rec.results.forEach(res => { if(res.score === 'Y') demonstratedCriteria.add(res.criterion); }));
 
                     let totalScore = demonstratedCriteria.size;
                     let pct = Math.round((totalScore / 9) * 100);
                     
                     let criteriaHtml = "<ul style='padding-left: 20px; font-size: 14px;'>";
                     criteria.forEach(crit => {
-                        if(demonstratedCriteria.has(crit)) {
-                            criteriaHtml += `<li style="color: green; margin-bottom: 5px;"><strong>✓</strong> ${crit}</li>`;
-                        } else {
-                            criteriaHtml += `<li style="color: gray; margin-bottom: 5px;">○ ${crit}</li>`;
-                        }
+                        if(demonstratedCriteria.has(crit)) criteriaHtml += `<li style="color: green; margin-bottom: 5px;"><strong>✓</strong> ${crit}</li>`;
+                        else criteriaHtml += `<li style="color: gray; margin-bottom: 5px;">○ ${crit}</li>`;
                     });
                     criteriaHtml += "</ul>";
-
-                    const activitiesList = records.map(r => r.activity).join(', ');
 
                     dash.innerHTML += `
                         <div class="dashboard-card">
@@ -424,14 +474,12 @@
                                 <h3 style="margin: 0;">${scoutName}</h3>
                                 <span class="badge">${totalScore}/9 Attributes (${pct}%)</span>
                             </div>
-                            <p style="font-size: 13px; color: #666; margin-top: 0;">Assessed at: ${activitiesList}</p>
+                            <p style="font-size: 13px; color: #666; margin-top: 0;">Assessed at: ${records.map(r => r.activity).join(', ')}</p>
                             ${criteriaHtml}
                         </div>
                     `;
                 }
-            } catch (error) {
-                dash.innerHTML = "<p style='color: red; text-align:center;'>Failed to load data.</p>";
-            }
+            } catch (error) { dash.innerHTML = "<p style='color: red; text-align:center;'>Failed to load data.</p>"; }
         }
     </script>
 </body>
