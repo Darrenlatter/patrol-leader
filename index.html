@@ -4,55 +4,80 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PL Training Assessment</title>
-    <!-- HTML5 QR Code Scanner Library -->
+    
+    <!-- QR Code Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <!-- QR Code Generator Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    
     <style>
         :root { --primary: #7413dc; --bg: #f4f4f9; --text: #333; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0; }
         header { background-color: var(--primary); color: white; padding: 1rem; text-align: center; }
-        nav { display: flex; justify-content: space-around; background: #ddd; padding: 10px; }
-        nav button { padding: 10px 20px; border: none; background: #ccc; cursor: pointer; border-radius: 5px; font-weight: bold; width: 100%; margin: 0 5px; }
+        nav { display: flex; justify-content: space-around; background: #ddd; padding: 10px; flex-wrap: wrap; gap: 5px; }
+        nav button { flex-grow: 1; padding: 10px; border: none; background: #ccc; cursor: pointer; border-radius: 5px; font-weight: bold; font-size: 14px; }
         nav button.active { background: var(--primary); color: white; }
         .container { padding: 20px; max-width: 600px; margin: auto; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+        
+        /* Form & Assessment Styles */
         .form-group { margin-bottom: 15px; }
         label { display: block; font-weight: bold; margin-bottom: 5px; }
         select, input[type="text"], textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
         .criteria-row { background: white; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ddd; }
         .radio-group { display: flex; gap: 15px; margin-top: 5px; }
         .radio-group label { font-weight: normal; }
-        button.submit-btn { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin-bottom: 30px;}
+        button.action-btn { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin-bottom: 10px; }
         #reader { width: 100%; max-width: 400px; margin: 0 auto 15px auto; border-radius: 8px; overflow: hidden; }
+        
+        /* Dashboard Styles */
         .dashboard-card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ddd; }
         .scout-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px; }
         .badge { background: #28a745; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
-        .refresh-btn { background: #333; color: white; padding: 12px; width: 100%; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        
+        /* Admin Styles */
+        .admin-section { background: white; padding: 15px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 20px; }
+        .admin-section h3 { margin-top: 0; border-bottom: 2px solid var(--primary); padding-bottom: 5px; }
+        .list-group { list-style: none; padding: 0; margin: 10px 0; max-height: 200px; overflow-y: auto; }
+        .list-group li { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; align-items: center; }
+        .delete-btn { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
+        .flex-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        
+        /* Print Styles for QR Codes */
+        #printArea { display: none; }
+        @media print {
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { display: flex; flex-wrap: wrap; justify-content: center; position: absolute; left: 0; top: 0; width: 100%; gap: 20px; }
+            .qr-card { text-align: center; border: 1px solid #000; padding: 15px; width: 180px; page-break-inside: avoid; margin-bottom: 20px; font-family: sans-serif; }
+            .qr-card img { width: 150px; height: 150px; }
+            .qr-card h4 { margin: 10px 0 5px 0; font-size: 18px; }
+            .qr-card p { margin: 0; font-size: 14px; color: #555; }
+        }
     </style>
 </head>
 <body>
 
     <header>
-        <h2 style="margin: 0;">PL Training Assessment</h2>
+        <h2 style="margin: 0;">PL Training App</h2>
     </header>
 
     <nav>
         <button id="nav-assess" class="active" onclick="switchTab('assess')">Assess</button>
         <button id="nav-dash" onclick="switchTab('dashboard')">Live Dashboard</button>
+        <button id="nav-admin" onclick="switchTab('admin')">Manage & QR</button>
     </nav>
 
     <div class="container">
-        <!-- ASSESS TAB -->
+        
+        <!-- 1. ASSESS TAB -->
         <div id="assess" class="tab-content active">
-            
             <div class="form-group">
                 <label>Scan Scout QR Code (or select manually)</label>
                 <div id="reader"></div>
                 <select id="scoutSelect">
                     <option value="">-- Manual Fallback: Select Scout --</option>
-                    <option value="P1-Joe">Joe Bloggs (Falcons)</option>
-                    <option value="P2-Raf">Rafael (Eagles)</option>
-                    <!-- Preload all scouts here -->
                 </select>
                 <p id="scoutConfirm" style="color: green; font-weight: bold; margin-top: 5px;"></p>
             </div>
@@ -66,29 +91,6 @@
                 <label>Activity / Base</label>
                 <select id="activitySelect">
                     <option value="">-- Select Activity --</option>
-                    <optgroup label="Instructing bases – Saturday am">
-                        <option value="Film Star">Film Star</option>
-                        <option value="Twisted fire starter">Twisted fire starter</option>
-                        <option value="All tied up">All tied up</option>
-                        <option value="All popped">All popped</option>
-                        <option value="Sticky Marshmallow">Sticky Marshmallow</option>
-                        <option value="Roasting time">Roasting time</option>
-                    </optgroup>
-                    <optgroup label="Teamwork and problem-solving bases – Saturday pm">
-                        <option value="Trauma tower">Trauma tower</option>
-                        <option value="Replication">Replication</option>
-                        <option value="Nuclear cleanup">Nuclear cleanup</option>
-                        <option value="Newspaper towers">Newspaper towers</option>
-                        <option value="Remote control shear legs">Remote control shear legs</option>
-                        <option value="Kim’s game">Kim’s game</option>
-                    </optgroup>
-                    <optgroup label="Inter patrol & Flagpole – Sunday">
-                        <option value="Inter patrol challenge">Inter patrol challenge</option>
-                        <option value="Flagpole teamwork challenge">Flagpole teamwork challenge</option>
-                        <option value="Spare one">Spare one</option>
-                        <option value="Spare two">Spare two</option>
-                        <option value="Spare three">Spare three</option>
-                    </optgroup>
                 </select>
             </div>
 
@@ -99,21 +101,51 @@
                 <textarea id="comments" rows="3"></textarea>
             </div>
 
-            <button class="submit-btn" onclick="submitAssessment()">Submit Assessment</button>
+            <button class="action-btn submit-btn" onclick="submitAssessment()">Submit Assessment</button>
         </div>
 
-        <!-- DASHBOARD TAB -->
+        <!-- 2. DASHBOARD TAB -->
         <div id="dashboard" class="tab-content">
             <div style="margin-bottom: 20px;">
-                <button class="refresh-btn" onclick="renderDashboard()">Refresh Live Data</button>
+                <button class="action-btn" style="background: #333;" onclick="renderDashboard()">Refresh Live Data</button>
             </div>
             <div id="dashboardContainer">
                 <p>Click "Refresh Live Data" to load Scout progress.</p>
             </div>
         </div>
+
+        <!-- 3. MANAGE & QR TAB -->
+        <div id="admin" class="tab-content">
+            
+            <div class="admin-section">
+                <h3>Manage Scouts</h3>
+                <div class="flex-row">
+                    <input type="text" id="newScoutName" placeholder="Scout Name (e.g. Joe Bloggs)">
+                    <input type="text" id="newScoutPatrol" placeholder="Patrol (e.g. Falcons)">
+                </div>
+                <button class="action-btn" style="padding: 10px;" onclick="addScout()">Add Scout</button>
+                <ul id="adminScoutList" class="list-group"></ul>
+                <button class="action-btn" style="background: #28a745; margin-top: 15px;" onclick="printQRCodes()">Print QR Code Badges</button>
+            </div>
+
+            <div class="admin-section">
+                <h3>Manage Activities / Bases</h3>
+                <div class="flex-row">
+                    <input type="text" id="newActivityName" placeholder="Activity Name">
+                </div>
+                <button class="action-btn" style="padding: 10px;" onclick="addActivity()">Add Activity</button>
+                <ul id="adminActivityList" class="list-group"></ul>
+            </div>
+
+        </div>
+
     </div>
 
+    <!-- Hidden area exclusively for printing QR codes -->
+    <div id="printArea"></div>
+
     <script>
+        // Paste your Google Web App URL here
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbziOAd3VLWhzGuzm9pWi5kz9AMgJhBXU0v5HjPOVdOYTHxniWF16W0QKC5ZzpBeQ5BLLg/exec"; 
         
         const criteria = [
@@ -128,72 +160,174 @@
             "Risks assessed and communicated"
         ];
 
+        // Load configured data from LocalStorage or use Defaults
+        let configuredScouts = JSON.parse(localStorage.getItem('pl_scouts')) || [];
+        let configuredActivities = JSON.parse(localStorage.getItem('pl_activities')) || [
+            "Film Star", "Twisted fire starter", "All tied up", "All popped", 
+            "Sticky Marshmallow", "Roasting time", "Trauma tower", "Replication", 
+            "Nuclear cleanup", "Newspaper towers", "Remote control shear legs", 
+            "Kim’s game", "Inter patrol challenge", "Flagpole teamwork challenge", 
+            "Spare one", "Spare two", "Spare three"
+        ];
+
         let html5QrcodeScanner = null;
 
-        // 1. Build the form interface immediately
-        const criteriaContainer = document.getElementById('criteriaContainer');
-        criteria.forEach((crit, index) => {
-            criteriaContainer.innerHTML += `
-                <div class="criteria-row">
-                    <label>${crit}</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="crit_${index}" value="Y"> Yes</label>
-                        <label><input type="radio" name="crit_${index}" value="N"> No</label>
-                        <label><input type="radio" name="crit_${index}" value="NOB" checked> Not observed</label>
-                    </div>
-                </div>
-            `;
-        });
-
-        // 2. Tab Switching Logic (Simplified to prevent camera crashes)
-        function switchTab(tabId) {
-            try {
-                // Hide all tabs and deactivate buttons
-                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-                document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
-                
-                // Show selected tab and activate button
-                document.getElementById(tabId).classList.add('active');
-                
-                if (tabId === 'assess') {
-                    document.getElementById('nav-assess').classList.add('active');
-                } else {
-                    document.getElementById('nav-dash').classList.add('active');
-                    renderDashboard(); // Auto-load data when switching to dashboard
-                }
-            } catch (error) {
-                console.error("Tab switch error:", error);
-            }
-        }
-
-        // 3. Camera Initialisation (wrapped in try/catch)
-        function initScanner() {
-            try {
-                if (typeof Html5QrcodeScanner === 'undefined') {
-                    console.warn("QR Library failed to load. Using manual dropdown fallback.");
-                    return;
-                }
-                if (!html5QrcodeScanner) {
-                    html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
-                    html5QrcodeScanner.render((decodedText) => {
-                        document.getElementById('scoutSelect').value = decodedText; 
-                        document.getElementById('scoutConfirm').innerText = `✓ Scout Identified: ${decodedText}`;
-                        html5QrcodeScanner.pause();
-                        setTimeout(() => html5QrcodeScanner.resume(), 3000); 
-                    }, (error) => {
-                        // Suppress constant scan failure logs
-                    });
-                }
-            } catch (error) {
-                console.error("Camera could not be started. Use manual dropdown.", error);
-            }
-        }
-
+        // 1. Initialise App
         window.onload = () => { 
+            buildCriteriaForm();
+            refreshDropdownsAndLists();
             initScanner(); 
         };
 
-        // 4. Submit to Google Sheets (Using 'no-cors' to prevent blocking)
+        function buildCriteriaForm() {
+            const criteriaContainer = document.getElementById('criteriaContainer');
+            criteria.forEach((crit, index) => {
+                criteriaContainer.innerHTML += `
+                    <div class="criteria-row">
+                        <label>${crit}</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="crit_${index}" value="Y"> Yes</label>
+                            <label><input type="radio" name="crit_${index}" value="N"> No</label>
+                            <label><input type="radio" name="crit_${index}" value="NOB" checked> Not observed</label>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // 2. Data Management (Admin functions)
+        function refreshDropdownsAndLists() {
+            // Update Assess Dropdowns
+            const scoutSelect = document.getElementById('scoutSelect');
+            const activitySelect = document.getElementById('activitySelect');
+            
+            scoutSelect.innerHTML = '<option value="">-- Manual Fallback: Select Scout --</option>';
+            configuredScouts.forEach((s, index) => {
+                const label = `${s.name} (${s.patrol})`;
+                scoutSelect.innerHTML += `<option value="${label}">${label}</option>`;
+            });
+
+            activitySelect.innerHTML = '<option value="">-- Select Activity --</option>';
+            configuredActivities.forEach((act, index) => {
+                activitySelect.innerHTML += `<option value="${act}">${act}</option>`;
+            });
+
+            // Update Admin Lists
+            const adminScoutList = document.getElementById('adminScoutList');
+            adminScoutList.innerHTML = '';
+            configuredScouts.forEach((s, index) => {
+                adminScoutList.innerHTML += `<li>${s.name} - ${s.patrol} <button class="delete-btn" onclick="deleteScout(${index})">X</button></li>`;
+            });
+
+            const adminActivityList = document.getElementById('adminActivityList');
+            adminActivityList.innerHTML = '';
+            configuredActivities.forEach((act, index) => {
+                adminActivityList.innerHTML += `<li>${act} <button class="delete-btn" onclick="deleteActivity(${index})">X</button></li>`;
+            });
+        }
+
+        function addScout() {
+            const name = document.getElementById('newScoutName').value.trim();
+            const patrol = document.getElementById('newScoutPatrol').value.trim();
+            if(!name || !patrol) return alert("Please enter both Name and Patrol.");
+            
+            configuredScouts.push({ name, patrol });
+            localStorage.setItem('pl_scouts', JSON.stringify(configuredScouts));
+            document.getElementById('newScoutName').value = "";
+            document.getElementById('newScoutPatrol').value = "";
+            refreshDropdownsAndLists();
+        }
+
+        function deleteScout(index) {
+            configuredScouts.splice(index, 1);
+            localStorage.setItem('pl_scouts', JSON.stringify(configuredScouts));
+            refreshDropdownsAndLists();
+        }
+
+        function addActivity() {
+            const act = document.getElementById('newActivityName').value.trim();
+            if(!act) return;
+            
+            configuredActivities.push(act);
+            localStorage.setItem('pl_activities', JSON.stringify(configuredActivities));
+            document.getElementById('newActivityName').value = "";
+            refreshDropdownsAndLists();
+        }
+
+        function deleteActivity(index) {
+            configuredActivities.splice(index, 1);
+            localStorage.setItem('pl_activities', JSON.stringify(configuredActivities));
+            refreshDropdownsAndLists();
+        }
+
+        // 3. Print QR Codes
+        function printQRCodes() {
+            if(configuredScouts.length === 0) {
+                return alert("Add some Scouts first before printing QR codes.");
+            }
+
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = '';
+
+            configuredScouts.forEach(scout => {
+                const qrValue = `${scout.name} (${scout.patrol})`;
+                
+                const card = document.createElement('div');
+                card.className = 'qr-card';
+                
+                const canvas = document.createElement('canvas');
+                new QRious({ element: canvas, value: qrValue, size: 150 });
+                
+                card.appendChild(canvas);
+                card.innerHTML += `<h4>${scout.name}</h4><p>${scout.patrol}</p>`;
+                printArea.appendChild(card);
+            });
+
+            window.print();
+        }
+
+        // 4. Tab Switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            
+            if (tabId === 'assess') {
+                document.getElementById('nav-assess').classList.add('active');
+            } else if (tabId === 'dashboard') {
+                document.getElementById('nav-dash').classList.add('active');
+                renderDashboard();
+            } else if (tabId === 'admin') {
+                document.getElementById('nav-admin').classList.add('active');
+            }
+        }
+
+        // 5. Scanner Initialisation
+        function initScanner() {
+            try {
+                if (!html5QrcodeScanner) {
+                    html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
+                    html5QrcodeScanner.render((decodedText) => {
+                        const select = document.getElementById('scoutSelect');
+                        
+                        // If the scanned scout isn't in this device's dropdown, add them dynamically so it can be submitted!
+                        if (!Array.from(select.options).some(opt => opt.value === decodedText)) {
+                            select.add(new Option(decodedText, decodedText));
+                        }
+                        
+                        select.value = decodedText; 
+                        document.getElementById('scoutConfirm').innerText = `✓ Scout Locked: ${decodedText}`;
+                        
+                        html5QrcodeScanner.pause();
+                        setTimeout(() => html5QrcodeScanner.resume(), 3000); 
+                    }, (error) => {});
+                }
+            } catch (e) {
+                console.error("Camera error:", e);
+            }
+        }
+
+        // 6. Submit Assessment
         async function submitAssessment() {
             const scout = document.getElementById('scoutSelect').value;
             const activity = document.getElementById('activitySelect').value;
@@ -201,8 +335,7 @@
             const comments = document.getElementById('comments').value;
 
             if(!scout || !activity || !assessor) {
-                alert("Please fill in Scout, Assessor, and Activity before submitting.");
-                return;
+                return alert("Please fill in Scout, Assessor, and Activity.");
             }
 
             let results = [];
@@ -219,17 +352,14 @@
             submitBtn.disabled = true;
 
             try {
-                // Sending data to Google Apps Script
                 await fetch(WEB_APP_URL, {
                     method: "POST",
-                    mode: "no-cors", // Crucial for Google Apps Script to accept POST from outside
+                    mode: "no-cors", 
                     headers: { "Content-Type": "text/plain" },
                     body: JSON.stringify(record)
                 });
                 
                 alert("Assessment saved successfully!");
-                
-                // Clear the form for the next scout
                 document.getElementById('scoutConfirm').innerText = "";
                 document.getElementById('scoutSelect').value = "";
                 document.getElementById('comments').value = "";
@@ -238,14 +368,13 @@
                 });
             } catch (error) {
                 alert("Failed to submit. Please check your internet connection.");
-                console.error("Submit Error:", error);
             } finally {
                 submitBtn.innerText = "Submit Assessment";
                 submitBtn.disabled = false;
             }
         }
 
-        // 5. Load Dashboard from Google Sheets
+        // 7. Render Dashboard
         async function renderDashboard() {
             const dash = document.getElementById('dashboardContainer');
             dash.innerHTML = "<p style='text-align:center;'>Fetching live data from Google Sheets...</p>";
@@ -261,17 +390,13 @@
 
                 dash.innerHTML = "";
                 const grouped = {};
-                
-                // Group the rows by scout name
                 assessments.forEach(a => {
                     if(!grouped[a.scout]) grouped[a.scout] = [];
                     grouped[a.scout].push(a);
                 });
 
-                // Generate HTML for each scout
                 for (const [scoutName, records] of Object.entries(grouped)) {
                     let demonstratedCriteria = new Set();
-                    
                     records.forEach(rec => {
                         rec.results.forEach(res => {
                             if(res.score === 'Y') demonstratedCriteria.add(res.criterion);
@@ -305,8 +430,7 @@
                     `;
                 }
             } catch (error) {
-                dash.innerHTML = "<p style='color: red; text-align:center;'>Failed to load data. Make sure your Google Apps Script is deployed to 'Anyone' and you have internet access.</p>";
-                console.error("Dashboard Error:", error);
+                dash.innerHTML = "<p style='color: red; text-align:center;'>Failed to load data.</p>";
             }
         }
     </script>
