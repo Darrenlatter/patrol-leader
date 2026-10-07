@@ -11,7 +11,7 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0; }
         header { background-color: var(--primary); color: white; padding: 1rem; text-align: center; }
         nav { display: flex; justify-content: space-around; background: #ddd; padding: 10px; }
-        nav button { padding: 10px 20px; border: none; background: #ccc; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        nav button { padding: 10px 20px; border: none; background: #ccc; cursor: pointer; border-radius: 5px; font-weight: bold; width: 100%; margin: 0 5px; }
         nav button.active { background: var(--primary); color: white; }
         .container { padding: 20px; max-width: 600px; margin: auto; }
         .tab-content { display: none; }
@@ -22,17 +22,18 @@
         .criteria-row { background: white; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ddd; }
         .radio-group { display: flex; gap: 15px; margin-top: 5px; }
         .radio-group label { font-weight: normal; }
-        button.submit-btn { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        button.submit-btn { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin-bottom: 30px;}
         #reader { width: 100%; max-width: 400px; margin: 0 auto 15px auto; border-radius: 8px; overflow: hidden; }
         .dashboard-card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ddd; }
         .scout-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px; }
         .badge { background: #28a745; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
+        .refresh-btn { background: #333; color: white; padding: 12px; width: 100%; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
     </style>
 </head>
 <body>
 
     <header>
-        <h2>PL Training Assessment</h2>
+        <h2 style="margin: 0;">PL Training Assessment</h2>
     </header>
 
     <nav>
@@ -104,13 +105,17 @@
         <!-- DASHBOARD TAB -->
         <div id="dashboard" class="tab-content">
             <div style="margin-bottom: 20px;">
-                <button onclick="renderDashboard()" style="padding: 8px; width: 100%;">Refresh Live Data</button>
+                <button class="refresh-btn" onclick="renderDashboard()">Refresh Live Data</button>
             </div>
-            <div id="dashboardContainer"></div>
+            <div id="dashboardContainer">
+                <p>Click "Refresh Live Data" to load Scout progress.</p>
+            </div>
         </div>
     </div>
 
     <script>
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbziOAd3VLWhzGuzm9pWi5kz9AMgJhBXU0v5HjPOVdOYTHxniWF16W0QKC5ZzpBeQ5BLLg/exec"; 
+        
         const criteria = [
             "PL took charge of the situation?",
             "Clear instructions to all patrol members?",
@@ -123,10 +128,9 @@
             "Risks assessed and communicated"
         ];
 
-        let assessments = JSON.parse(localStorage.getItem('pl_assessments')) || [];
-        let html5QrcodeScanner;
+        let html5QrcodeScanner = null;
 
-        // Initialize criteria form
+        // 1. Build the form interface immediately
         const criteriaContainer = document.getElementById('criteriaContainer');
         criteria.forEach((crit, index) => {
             criteriaContainer.innerHTML += `
@@ -141,41 +145,55 @@
             `;
         });
 
-        // Tab Switching logic
+        // 2. Tab Switching Logic (Simplified to prevent camera crashes)
         function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            
-            if(tabId === 'assess') {
-                document.getElementById('nav-assess').classList.add('active');
-                initScanner();
-            } else {
-                document.getElementById('nav-dash').classList.add('active');
-                if(html5QrcodeScanner) {
-                    html5QrcodeScanner.clear().catch(error => console.error("Failed to clear scanner", error));
+            try {
+                // Hide all tabs and deactivate buttons
+                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+                
+                // Show selected tab and activate button
+                document.getElementById(tabId).classList.add('active');
+                
+                if (tabId === 'assess') {
+                    document.getElementById('nav-assess').classList.add('active');
+                } else {
+                    document.getElementById('nav-dash').classList.add('active');
+                    renderDashboard(); // Auto-load data when switching to dashboard
                 }
-                renderDashboard();
+            } catch (error) {
+                console.error("Tab switch error:", error);
             }
         }
 
-        // QR Scanner init
+        // 3. Camera Initialisation (wrapped in try/catch)
         function initScanner() {
-            if(html5QrcodeScanner) return;
-            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
-            html5QrcodeScanner.render((decodedText) => {
-                document.getElementById('scoutSelect').value = decodedText; // Assumes QR text matches the <option> value
-                document.getElementById('scoutConfirm').innerText = `✓ Scout Identified: ${decodedText}`;
-                html5QrcodeScanner.pause();
-                setTimeout(() => html5QrcodeScanner.resume(), 3000); // pause so they don't scan twice by accident
-            }, (error) => {});
+            try {
+                if (typeof Html5QrcodeScanner === 'undefined') {
+                    console.warn("QR Library failed to load. Using manual dropdown fallback.");
+                    return;
+                }
+                if (!html5QrcodeScanner) {
+                    html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
+                    html5QrcodeScanner.render((decodedText) => {
+                        document.getElementById('scoutSelect').value = decodedText; 
+                        document.getElementById('scoutConfirm').innerText = `✓ Scout Identified: ${decodedText}`;
+                        html5QrcodeScanner.pause();
+                        setTimeout(() => html5QrcodeScanner.resume(), 3000); 
+                    }, (error) => {
+                        // Suppress constant scan failure logs
+                    });
+                }
+            } catch (error) {
+                console.error("Camera could not be started. Use manual dropdown.", error);
+            }
         }
 
-        window.onload = () => { initScanner(); };
+        window.onload = () => { 
+            initScanner(); 
+        };
 
-        // Paste your Google Web App URL here
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbziOAd3VLWhzGuzm9pWi5kz9AMgJhBXU0v5HjPOVdOYTHxniWF16W0QKC5ZzpBeQ5BLLg/exec"; 
-
+        // 4. Submit to Google Sheets (Using 'no-cors' to prevent blocking)
         async function submitAssessment() {
             const scout = document.getElementById('scoutSelect').value;
             const activity = document.getElementById('activitySelect').value;
@@ -183,7 +201,7 @@
             const comments = document.getElementById('comments').value;
 
             if(!scout || !activity || !assessor) {
-                alert("Please fill in Scout, Assessor, and Activity.");
+                alert("Please fill in Scout, Assessor, and Activity before submitting.");
                 return;
             }
 
@@ -197,16 +215,21 @@
 
             const record = { scout, activity, assessor, results, yCount, comments };
             const submitBtn = document.querySelector('.submit-btn');
-            submitBtn.innerText = "Submitting...";
+            submitBtn.innerText = "Submitting to Server...";
             submitBtn.disabled = true;
 
             try {
+                // Sending data to Google Apps Script
                 await fetch(WEB_APP_URL, {
                     method: "POST",
+                    mode: "no-cors", // Crucial for Google Apps Script to accept POST from outside
+                    headers: { "Content-Type": "text/plain" },
                     body: JSON.stringify(record)
                 });
                 
-                alert("Assessment saved to live dashboard!");
+                alert("Assessment saved successfully!");
+                
+                // Clear the form for the next scout
                 document.getElementById('scoutConfirm').innerText = "";
                 document.getElementById('scoutSelect').value = "";
                 document.getElementById('comments').value = "";
@@ -214,36 +237,41 @@
                     document.querySelector(`input[name="crit_${index}"][value="NOB"]`).checked = true;
                 });
             } catch (error) {
-                alert("Error saving. Please check your internet connection.");
-                console.error(error);
+                alert("Failed to submit. Please check your internet connection.");
+                console.error("Submit Error:", error);
             } finally {
                 submitBtn.innerText = "Submit Assessment";
                 submitBtn.disabled = false;
             }
         }
 
+        // 5. Load Dashboard from Google Sheets
         async function renderDashboard() {
             const dash = document.getElementById('dashboardContainer');
-            dash.innerHTML = "<p>Loading live data from server...</p>";
+            dash.innerHTML = "<p style='text-align:center;'>Fetching live data from Google Sheets...</p>";
 
             try {
                 const response = await fetch(WEB_APP_URL);
                 const assessments = await response.json();
 
-                if(assessments.length === 0) {
-                    dash.innerHTML = "<p>No assessments recorded yet.</p>";
+                if(!assessments || assessments.length === 0) {
+                    dash.innerHTML = "<p style='text-align:center;'>No assessments have been recorded yet.</p>";
                     return;
                 }
 
                 dash.innerHTML = "";
                 const grouped = {};
+                
+                // Group the rows by scout name
                 assessments.forEach(a => {
                     if(!grouped[a.scout]) grouped[a.scout] = [];
                     grouped[a.scout].push(a);
                 });
 
+                // Generate HTML for each scout
                 for (const [scoutName, records] of Object.entries(grouped)) {
                     let demonstratedCriteria = new Set();
+                    
                     records.forEach(rec => {
                         rec.results.forEach(res => {
                             if(res.score === 'Y') demonstratedCriteria.add(res.criterion);
@@ -253,15 +281,17 @@
                     let totalScore = demonstratedCriteria.size;
                     let pct = Math.round((totalScore / 9) * 100);
                     
-                    let criteriaHtml = "<ul style='padding-left: 20px;'>";
+                    let criteriaHtml = "<ul style='padding-left: 20px; font-size: 14px;'>";
                     criteria.forEach(crit => {
                         if(demonstratedCriteria.has(crit)) {
-                            criteriaHtml += `<li style="color: green; margin-bottom: 5px;">✓ ${crit}</li>`;
+                            criteriaHtml += `<li style="color: green; margin-bottom: 5px;"><strong>✓</strong> ${crit}</li>`;
                         } else {
                             criteriaHtml += `<li style="color: gray; margin-bottom: 5px;">○ ${crit}</li>`;
                         }
                     });
                     criteriaHtml += "</ul>";
+
+                    const activitiesList = records.map(r => r.activity).join(', ');
 
                     dash.innerHTML += `
                         <div class="dashboard-card">
@@ -269,14 +299,14 @@
                                 <h3 style="margin: 0;">${scoutName}</h3>
                                 <span class="badge">${totalScore}/9 Attributes (${pct}%)</span>
                             </div>
-                            <p style="font-size: 13px; color: #666; margin-top: 0;">Assessed at: ${records.map(r => r.activity).join(', ')}</p>
+                            <p style="font-size: 13px; color: #666; margin-top: 0;">Assessed at: ${activitiesList}</p>
                             ${criteriaHtml}
                         </div>
                     `;
                 }
             } catch (error) {
-                dash.innerHTML = "<p style='color: red;'>Failed to load data. Please check your connection.</p>";
-                console.error(error);
+                dash.innerHTML = "<p style='color: red; text-align:center;'>Failed to load data. Make sure your Google Apps Script is deployed to 'Anyone' and you have internet access.</p>";
+                console.error("Dashboard Error:", error);
             }
         }
     </script>
