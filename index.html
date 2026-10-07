@@ -253,7 +253,7 @@
             refreshDropdownsAndLists();
         }
 
-        function printQRCodes() {
+function printQRCodes() {
             if(configuredScouts.length === 0) return alert("Add some Scouts first.");
             const printArea = document.getElementById('printArea');
             printArea.innerHTML = '';
@@ -261,13 +261,27 @@
             configuredScouts.forEach(scout => {
                 const card = document.createElement('div');
                 card.className = 'qr-card';
-                const canvas = document.createElement('canvas');
-                new QRious({ element: canvas, value: `${scout.name} (${scout.patrol})`, size: 150 });
-                card.appendChild(canvas);
-                card.innerHTML += `<h4>${scout.name}</h4><p>${scout.patrol}</p>`;
+                
+                // Generate the QR code and convert it immediately to an image URL
+                const qr = new QRious({ 
+                    value: `${scout.name} (${scout.patrol})`, 
+                    size: 150 
+                });
+                
+                // Construct the card safely using an image tag instead of a canvas
+                card.innerHTML = `
+                    <img src="${qr.toDataURL()}" alt="QR Code">
+                    <h4>${scout.name}</h4>
+                    <p style="margin: 0; font-size: 14px; color: #555;">${scout.patrol}</p>
+                `;
+                
                 printArea.appendChild(card);
             });
-            window.print();
+            
+            // Give the browser a split second to render the images before popping the print dialog
+            setTimeout(() => {
+                window.print();
+            }, 300);
         }
 
         function switchTab(tabId) {
