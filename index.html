@@ -173,112 +173,111 @@
 
         window.onload = () => { initScanner(); };
 
-       // Paste your Google Web App URL here
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbziOAd3VLWhzGuzm9pWi5kz9AMgJhBXU0v5HjPOVdOYTHxniWF16W0QKC5ZzpBeQ5BLLg/exec"; 
+        // Paste your Google Web App URL here
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbziOAd3VLWhzGuzm9pWi5kz9AMgJhBXU0v5HjPOVdOYTHxniWF16W0QKC5ZzpBeQ5BLLg/exec"; 
 
-async function submitAssessment() {
-    const scout = document.getElementById('scoutSelect').value;
-    const activity = document.getElementById('activitySelect').value;
-    const assessor = document.getElementById('assessorName').value;
-    const comments = document.getElementById('comments').value;
+        async function submitAssessment() {
+            const scout = document.getElementById('scoutSelect').value;
+            const activity = document.getElementById('activitySelect').value;
+            const assessor = document.getElementById('assessorName').value;
+            const comments = document.getElementById('comments').value;
 
-    if(!scout || !activity || !assessor) {
-        alert("Please fill in Scout, Assessor, and Activity.");
-        return;
-    }
+            if(!scout || !activity || !assessor) {
+                alert("Please fill in Scout, Assessor, and Activity.");
+                return;
+            }
 
-    let results = [];
-    let yCount = 0;
-    criteria.forEach((crit, index) => {
-        const val = document.querySelector(`input[name="crit_${index}"]:checked`).value;
-        results.push({ criterion: crit, score: val });
-        if(val === 'Y') yCount++;
-    });
+            let results = [];
+            let yCount = 0;
+            criteria.forEach((crit, index) => {
+                const val = document.querySelector(`input[name="crit_${index}"]:checked`).value;
+                results.push({ criterion: crit, score: val });
+                if(val === 'Y') yCount++;
+            });
 
-    const record = { scout, activity, assessor, results, yCount, comments };
-    const submitBtn = document.querySelector('.submit-btn');
-    submitBtn.innerText = "Submitting...";
-    submitBtn.disabled = true;
+            const record = { scout, activity, assessor, results, yCount, comments };
+            const submitBtn = document.querySelector('.submit-btn');
+            submitBtn.innerText = "Submitting...";
+            submitBtn.disabled = true;
 
-    try {
-        await fetch(WEB_APP_URL, {
-            method: "POST",
-            body: JSON.stringify(record)
-        });
-        
-        alert("Assessment saved to live dashboard!");
-        document.getElementById('scoutConfirm').innerText = "";
-        document.getElementById('scoutSelect').value = "";
-        document.getElementById('comments').value = "";
-        criteria.forEach((crit, index) => {
-            document.querySelector(`input[name="crit_${index}"][value="NOB"]`).checked = true;
-        });
-    } catch (error) {
-        alert("Error saving. Please check your internet connection.");
-        console.error(error);
-    } finally {
-        submitBtn.innerText = "Submit Assessment";
-        submitBtn.disabled = false;
-    }
-}
-
-async function renderDashboard() {
-    const dash = document.getElementById('dashboardContainer');
-    dash.innerHTML = "<p>Loading live data from server...</p>";
-
-    try {
-        const response = await fetch(WEB_APP_URL);
-        const assessments = await response.json();
-
-        if(assessments.length === 0) {
-            dash.innerHTML = "<p>No assessments recorded yet.</p>";
-            return;
-        }
-
-        dash.innerHTML = "";
-        const grouped = {};
-        assessments.forEach(a => {
-            if(!grouped[a.scout]) grouped[a.scout] = [];
-            grouped[a.scout].push(a);
-        });
-
-        for (const [scoutName, records] of Object.entries(grouped)) {
-            let demonstratedCriteria = new Set();
-            records.forEach(rec => {
-                rec.results.forEach(res => {
-                    if(res.score === 'Y') demonstratedCriteria.add(res.criterion);
+            try {
+                await fetch(WEB_APP_URL, {
+                    method: "POST",
+                    body: JSON.stringify(record)
                 });
-            });
-
-            let totalScore = demonstratedCriteria.size;
-            let pct = Math.round((totalScore / 9) * 100);
-            
-            let criteriaHtml = "<ul style='padding-left: 20px;'>";
-            criteria.forEach(crit => {
-                if(demonstratedCriteria.has(crit)) {
-                    criteriaHtml += `<li style="color: green; margin-bottom: 5px;">✓ ${crit}</li>`;
-                } else {
-                    criteriaHtml += `<li style="color: gray; margin-bottom: 5px;">○ ${crit}</li>`;
-                }
-            });
-            criteriaHtml += "</ul>";
-
-            dash.innerHTML += `
-                <div class="dashboard-card">
-                    <div class="scout-header">
-                        <h3 style="margin: 0;">${scoutName}</h3>
-                        <span class="badge">${totalScore}/9 Attributes (${pct}%)</span>
-                    </div>
-                    <p style="font-size: 13px; color: #666; margin-top: 0;">Assessed at: ${records.map(r => r.activity).join(', ')}</p>
-                    ${criteriaHtml}
-                </div>
-            `;
+                
+                alert("Assessment saved to live dashboard!");
+                document.getElementById('scoutConfirm').innerText = "";
+                document.getElementById('scoutSelect').value = "";
+                document.getElementById('comments').value = "";
+                criteria.forEach((crit, index) => {
+                    document.querySelector(`input[name="crit_${index}"][value="NOB"]`).checked = true;
+                });
+            } catch (error) {
+                alert("Error saving. Please check your internet connection.");
+                console.error(error);
+            } finally {
+                submitBtn.innerText = "Submit Assessment";
+                submitBtn.disabled = false;
+            }
         }
-    } catch (error) {
-        dash.innerHTML = "<p style='color: red;'>Failed to load data. Please check your connection.</p>";
-        console.error(error);
-    }
-}
+
+        async function renderDashboard() {
+            const dash = document.getElementById('dashboardContainer');
+            dash.innerHTML = "<p>Loading live data from server...</p>";
+
+            try {
+                const response = await fetch(WEB_APP_URL);
+                const assessments = await response.json();
+
+                if(assessments.length === 0) {
+                    dash.innerHTML = "<p>No assessments recorded yet.</p>";
+                    return;
+                }
+
+                dash.innerHTML = "";
+                const grouped = {};
+                assessments.forEach(a => {
+                    if(!grouped[a.scout]) grouped[a.scout] = [];
+                    grouped[a.scout].push(a);
+                });
+
+                for (const [scoutName, records] of Object.entries(grouped)) {
+                    let demonstratedCriteria = new Set();
+                    records.forEach(rec => {
+                        rec.results.forEach(res => {
+                            if(res.score === 'Y') demonstratedCriteria.add(res.criterion);
+                        });
+                    });
+
+                    let totalScore = demonstratedCriteria.size;
+                    let pct = Math.round((totalScore / 9) * 100);
+                    
+                    let criteriaHtml = "<ul style='padding-left: 20px;'>";
+                    criteria.forEach(crit => {
+                        if(demonstratedCriteria.has(crit)) {
+                            criteriaHtml += `<li style="color: green; margin-bottom: 5px;">✓ ${crit}</li>`;
+                        } else {
+                            criteriaHtml += `<li style="color: gray; margin-bottom: 5px;">○ ${crit}</li>`;
+                        }
+                    });
+                    criteriaHtml += "</ul>";
+
+                    dash.innerHTML += `
+                        <div class="dashboard-card">
+                            <div class="scout-header">
+                                <h3 style="margin: 0;">${scoutName}</h3>
+                                <span class="badge">${totalScore}/9 Attributes (${pct}%)</span>
+                            </div>
+                            <p style="font-size: 13px; color: #666; margin-top: 0;">Assessed at: ${records.map(r => r.activity).join(', ')}</p>
+                            ${criteriaHtml}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                dash.innerHTML = "<p style='color: red;'>Failed to load data. Please check your connection.</p>";
+                console.error(error);
+            }
         }
     </script>
 </body>
