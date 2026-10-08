@@ -21,7 +21,7 @@
         
         .form-group { margin-bottom: 15px; }
         label { display: block; font-weight: bold; margin-bottom: 5px; }
-        select, input[type="text"], textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        select, input[type="text"], textarea, input[type="file"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
         .criteria-row { background: white; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ddd; }
         .radio-group { display: flex; gap: 15px; margin-top: 5px; }
         .radio-group label { font-weight: normal; }
@@ -38,6 +38,7 @@
         .list-group li { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; align-items: center; }
         .delete-btn { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
         .flex-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .import-box { background: #f8f9fa; padding: 10px; border: 1px dashed #ccc; border-radius: 5px; margin-bottom: 10px; }
         
         #printArea { display: none; }
         @media print {
@@ -69,7 +70,7 @@
         <!-- 1. ASSESS TAB -->
         <div id="assess" class="tab-content active">
             <div id="editWarning" style="display:none; background: #ffeb3b; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-weight: bold; text-align: center;">
-                Editing an Existing Assessment <button onclick="cancelEdit()" style="margin-left: 10px;">Cancel</button>
+                Editing an Existing Assessment <button onclick="cancelEdit()" style="margin-left: 10px; padding: 5px 10px; cursor:pointer;">Cancel</button>
             </div>
 
             <div class="form-group">
@@ -115,8 +116,9 @@
 
         <!-- 3. DASHBOARD TAB -->
         <div id="dashboard" class="tab-content">
-            <div style="margin-bottom: 20px;">
-                <button class="action-btn" style="background: #333;" onclick="renderDashboard()">Refresh Live Data</button>
+            <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+                <button class="action-btn" style="background: #333; margin-bottom: 0;" onclick="renderDashboard()">Refresh Live Data</button>
+                <button class="action-btn" style="background: #17a2b8; margin-bottom: 0;" onclick="exportDashboard()">Export to CSV</button>
             </div>
             <div id="dashboardContainer">
                 <p>Click "Refresh Live Data" to load Scout progress.</p>
@@ -127,21 +129,35 @@
         <div id="admin" class="tab-content">
             <div class="admin-section">
                 <h3>Manage Scouts</h3>
-                <div class="flex-row">
+                
+                <div class="import-box">
+                    <label style="font-size: 14px;">Bulk Import Scouts (CSV: Name, Patrol)</label>
+                    <input type="file" id="scoutCsvUpload" accept=".csv" style="margin-bottom: 10px;">
+                    <button class="action-btn" style="background: #17a2b8; padding: 10px; font-size: 14px;" onclick="importScoutsCSV()">Import CSV</button>
+                </div>
+
+                <div class="flex-row" style="margin-top: 15px;">
                     <input type="text" id="newScoutName" placeholder="Scout Name">
                     <input type="text" id="newScoutPatrol" placeholder="Patrol">
                 </div>
-                <button class="action-btn" style="padding: 10px;" onclick="addScout()">Add Scout</button>
+                <button class="action-btn" style="padding: 10px;" onclick="addScout()">Add Single Scout</button>
                 <ul id="adminScoutList" class="list-group"></ul>
                 <button class="action-btn" style="background: #28a745; margin-top: 15px;" onclick="printQRCodes()">Print QR Code Badges</button>
             </div>
 
             <div class="admin-section">
                 <h3>Manage Activities / Bases</h3>
-                <div class="flex-row">
+                
+                <div class="import-box">
+                    <label style="font-size: 14px;">Bulk Import Activities (CSV: Activity Name)</label>
+                    <input type="file" id="activityCsvUpload" accept=".csv" style="margin-bottom: 10px;">
+                    <button class="action-btn" style="background: #17a2b8; padding: 10px; font-size: 14px;" onclick="importActivitiesCSV()">Import CSV</button>
+                </div>
+
+                <div class="flex-row" style="margin-top: 15px;">
                     <input type="text" id="newActivityName" placeholder="Activity Name">
                 </div>
-                <button class="action-btn" style="padding: 10px;" onclick="addActivity()">Add Activity</button>
+                <button class="action-btn" style="padding: 10px;" onclick="addActivity()">Add Single Activity</button>
                 <ul id="adminActivityList" class="list-group"></ul>
             </div>
         </div>
@@ -221,6 +237,67 @@
             configuredActivities.forEach((act, index) => adminActivityList.innerHTML += `<li>${act} <button class="delete-btn" onclick="deleteActivity(${index})">X</button></li>`);
         }
 
+        // ---------- IMPORT DATA (CSV) ---------- //
+
+        function importScoutsCSV() {
+            const file = document.getElementById('scoutCsvUpload').files[0];
+            if(!file) return alert("Please select a CSV file first.");
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split('\n');
+                let count = 0;
+                
+                lines.forEach(line => {
+                    const parts = line.split(',');
+                    if(parts.length >= 2) {
+                        const name = parts[0].trim();
+                        const patrol = parts[1].trim();
+                        // Skip obvious header rows
+                        if(name && patrol && name.toLowerCase() !== 'name' && name.toLowerCase() !== 'scout') { 
+                            configuredScouts.push({ name, patrol });
+                            count++;
+                        }
+                    }
+                });
+                
+                localStorage.setItem('pl_scouts', JSON.stringify(configuredScouts));
+                refreshDropdownsAndLists();
+                document.getElementById('scoutCsvUpload').value = "";
+                alert(`Successfully imported ${count} Scouts!`);
+            };
+            reader.readAsText(file);
+        }
+
+        function importActivitiesCSV() {
+            const file = document.getElementById('activityCsvUpload').files[0];
+            if(!file) return alert("Please select a CSV file first.");
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split('\n');
+                let count = 0;
+                
+                lines.forEach(line => {
+                    const act = line.trim().replace(/,/g, ''); // strip stray commas
+                    if(act && act.toLowerCase() !== 'activity' && act.toLowerCase() !== 'base') {
+                        configuredActivities.push(act);
+                        count++;
+                    }
+                });
+                
+                localStorage.setItem('pl_activities', JSON.stringify(configuredActivities));
+                refreshDropdownsAndLists();
+                document.getElementById('activityCsvUpload').value = "";
+                alert(`Successfully imported ${count} Activities!`);
+            };
+            reader.readAsText(file);
+        }
+
+        // ---------- MANAGE DATA ---------- //
+
         function addScout() {
             const name = document.getElementById('newScoutName').value.trim();
             const patrol = document.getElementById('newScoutPatrol').value.trim();
@@ -253,7 +330,7 @@
             refreshDropdownsAndLists();
         }
 
-function printQRCodes() {
+        function printQRCodes() {
             if(configuredScouts.length === 0) return alert("Add some Scouts first.");
             const printArea = document.getElementById('printArea');
             printArea.innerHTML = '';
@@ -262,13 +339,11 @@ function printQRCodes() {
                 const card = document.createElement('div');
                 card.className = 'qr-card';
                 
-                // Generate the QR code and convert it immediately to an image URL
                 const qr = new QRious({ 
                     value: `${scout.name} (${scout.patrol})`, 
                     size: 150 
                 });
                 
-                // Construct the card safely using an image tag instead of a canvas
                 card.innerHTML = `
                     <img src="${qr.toDataURL()}" alt="QR Code">
                     <h4>${scout.name}</h4>
@@ -278,7 +353,6 @@ function printQRCodes() {
                 printArea.appendChild(card);
             });
             
-            // Give the browser a split second to render the images before popping the print dialog
             setTimeout(() => {
                 window.print();
             }, 300);
@@ -329,7 +403,6 @@ function printQRCodes() {
                 if(val === 'Y') yCount++;
             });
 
-            // Set the ID to the one being edited, OR generate a new timestamp string for a new assessment
             const recordId = editingAssessmentId || new Date().getTime().toString();
             const record = { id: recordId, scout, activity, assessor, results, yCount, comments };
             
@@ -349,7 +422,7 @@ function printQRCodes() {
                 });
                 
                 alert(editingAssessmentId ? "Assessment Updated!" : "Assessment Saved!");
-                cancelEdit(); // Resets form and UI state
+                cancelEdit(); 
             } catch (error) {
                 alert("Failed to submit. Please check your internet connection.");
             } finally {
@@ -371,7 +444,6 @@ function printQRCodes() {
                 }
                 
                 hist.innerHTML = "";
-                // Render newest first
                 [...globalAssessments].reverse().forEach(a => {
                     const timeString = new Date(a.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     const isEditable = a.id ? true : false; 
@@ -404,7 +476,6 @@ function printQRCodes() {
             document.querySelector('.submit-btn').innerText = "Update Assessment";
             document.querySelector('.submit-btn').style.background = "#17a2b8";
             
-            // Populate form
             const select = document.getElementById('scoutSelect');
             if (!Array.from(select.options).some(opt => opt.value === record.scout)) select.add(new Option(record.scout, record.scout));
             select.value = record.scout;
@@ -427,7 +498,6 @@ function printQRCodes() {
             document.querySelector('.submit-btn').innerText = "Submit Assessment";
             document.querySelector('.submit-btn').style.background = "var(--primary)";
             
-            // Clear form
             document.getElementById('scoutConfirm').innerText = "";
             document.getElementById('scoutSelect').value = "";
             document.getElementById('comments').value = "";
@@ -443,13 +513,13 @@ function printQRCodes() {
                     body: JSON.stringify({ action: "delete", id: id })
                 });
                 alert("Assessment Deleted!");
-                loadHistory(); // Reload list
+                loadHistory(); 
             } catch (error) {
                 alert("Failed to delete. Check your connection.");
             }
         }
 
-        // ---------- DASHBOARD ---------- //
+        // ---------- DASHBOARD & EXPORT ---------- //
 
         async function renderDashboard() {
             const dash = document.getElementById('dashboardContainer');
@@ -494,6 +564,35 @@ function printQRCodes() {
                     `;
                 }
             } catch (error) { dash.innerHTML = "<p style='color: red; text-align:center;'>Failed to load data.</p>"; }
+        }
+
+        function exportDashboard() {
+            if (globalAssessments.length === 0) return alert("No data available to export. Please refresh the live dashboard first.");
+            
+            let csvContent = "Timestamp,Scout,Activity,Assessor," + criteria.map(c => `"${c}"`).join(",") + ",Total Ys,Comments\n";
+            
+            globalAssessments.forEach(a => {
+                const row = [
+                    `"${new Date(a.timestamp).toLocaleString()}"`,
+                    `"${a.scout}"`,
+                    `"${a.activity}"`,
+                    `"${a.assessor}"`,
+                    ...a.results.map(r => `"${r.score}"`),
+                    a.yCount,
+                    `"${(a.comments || "").replace(/"/g, '""')}"`
+                ];
+                csvContent += row.join(",") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "PL_Assessments_Export.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     </script>
 </body>
