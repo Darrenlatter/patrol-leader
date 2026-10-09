@@ -2,43 +2,151 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PL Training Assessment</title>
+    
+    <!-- Official UK Scouts Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700;800&display=swap" rel="stylesheet">
     
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     
     <style>
-        :root { --primary: #7413dc; --bg: #f4f4f9; --text: #333; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0; }
-        header { background-color: var(--primary); color: white; padding: 1rem; text-align: center; }
-        nav { display: flex; justify-content: space-around; background: #ddd; padding: 10px; flex-wrap: wrap; gap: 5px; }
-        nav button { flex-grow: 1; padding: 10px; border: none; background: #ccc; cursor: pointer; border-radius: 5px; font-weight: bold; font-size: 14px; min-width: 80px; }
-        nav button.active { background: var(--primary); color: white; }
+        :root { 
+            --primary: #7413dc; /* Scout Purple */
+            --secondary: #00a794; /* Scout Teal */
+            --bg: #f4f4f9; 
+            --text: #333; 
+            --danger: #e30043;
+            --success: #28a745;
+            --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        
+        body { 
+            font-family: 'Nunito Sans', sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            padding: 0 0 80px 0; /* Space for bottom nav */
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        header { 
+            background-color: var(--primary); 
+            color: white; 
+            padding: 1.2rem; 
+            text-align: center; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        /* Mobile-App Bottom Navigation */
+        nav { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            width: 100%; 
+            display: flex; 
+            justify-content: space-around; 
+            background: white; 
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05); 
+            z-index: 1000;
+            padding: 5px 0 15px 0; /* Extra padding for modern phones */
+        }
+        nav button { 
+            flex: 1; 
+            background: transparent; 
+            border: none; 
+            color: #888; 
+            cursor: pointer; 
+            font-family: 'Nunito Sans', sans-serif;
+            font-weight: 700; 
+            font-size: 11px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 4px;
+            padding: 8px 0;
+            transition: color 0.2s;
+        }
+        nav button svg { fill: currentColor; width: 24px; height: 24px; }
+        nav button.active { color: var(--primary); }
+        
         .container { padding: 20px; max-width: 600px; margin: auto; }
-        .tab-content { display: none; }
+        .tab-content { display: none; animation: fadeIn 0.3s; }
         .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; }
-        select, input[type="text"], textarea, input[type="file"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        .criteria-row { background: white; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ddd; }
-        .radio-group { display: flex; gap: 15px; margin-top: 5px; }
-        .radio-group label { font-weight: normal; }
-        button.action-btn { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin-bottom: 10px; }
-        #reader { width: 100%; max-width: 400px; margin: 0 auto 15px auto; border-radius: 8px; overflow: hidden; }
+        /* Form & Cards */
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: 800; margin-bottom: 8px; font-size: 14px; color: #555; }
+        select, input[type="text"], textarea, input[type="file"] { 
+            width: 100%; padding: 12px; border: 1px solid #ddd; 
+            border-radius: 8px; box-sizing: border-box; font-family: 'Nunito Sans', sans-serif; 
+            font-size: 16px; background: white; transition: border-color 0.2s;
+        }
+        select:focus, input[type="text"]:focus, textarea:focus { outline: none; border-color: var(--primary); }
         
-        .dashboard-card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ddd; }
-        .scout-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px; }
-        .badge { background: #28a745; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; }
+        button.action-btn { 
+            width: 100%; padding: 15px; background: var(--primary); 
+            color: white; border: none; border-radius: 8px; 
+            font-size: 16px; font-weight: 800; cursor: pointer; 
+            margin-bottom: 10px; font-family: 'Nunito Sans', sans-serif;
+            box-shadow: 0 4px 6px rgba(116, 19, 220, 0.2);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        button.action-btn:active { transform: translateY(2px); box-shadow: 0 2px 4px rgba(116, 19, 220, 0.2); }
         
-        .admin-section { background: white; padding: 15px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 20px; }
-        .admin-section h3 { margin-top: 0; border-bottom: 2px solid var(--primary); padding-bottom: 5px; }
-        .list-group { list-style: none; padding: 0; margin: 10px 0; max-height: 200px; overflow-y: auto; }
-        .list-group li { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; align-items: center; }
-        .delete-btn { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
+        /* Touch-Friendly Radio Buttons */
+        .criteria-row { background: white; padding: 15px; margin-bottom: 12px; border-radius: 12px; box-shadow: var(--card-shadow); border: 1px solid #f0f0f0; }
+        .criteria-row label.crit-title { font-size: 15px; color: #222; margin-bottom: 12px; display: block; line-height: 1.3; }
+        .radio-group { display: flex; gap: 8px; }
+        
+        /* Hide default radios */
+        .radio-group input[type="radio"] { display: none; }
+        
+        /* Style the labels as large tap targets */
+        .radio-group label.tap-target {
+            flex: 1; text-align: center; padding: 12px 5px; border-radius: 8px; 
+            background: #f4f4f4; border: 2px solid transparent; 
+            font-weight: 700; font-size: 14px; color: #666; 
+            cursor: pointer; transition: all 0.2s;
+        }
+        /* Active states */
+        .radio-group input[value="Y"]:checked + label { background: #e8f5e9; border-color: var(--success); color: var(--success); }
+        .radio-group input[value="N"]:checked + label { background: #ffebee; border-color: var(--danger); color: var(--danger); }
+        .radio-group input[value="NOB"]:checked + label { background: #e0e0e0; border-color: #999; color: #333; }
+        
+        #reader { width: 100%; max-width: 400px; margin: 0 auto 15px auto; border-radius: 12px; overflow: hidden; box-shadow: var(--card-shadow); border: none; }
+        
+        /* Dashboard Cards & Progress Bar */
+        .dashboard-card { background: white; padding: 20px; margin-bottom: 15px; border-radius: 12px; box-shadow: var(--card-shadow); border: 1px solid #eee; border-left: 5px solid var(--secondary); }
+        .scout-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 15px; }
+        .scout-header h3 { font-size: 18px; margin: 0; color: #111; }
+        .badge { background: var(--secondary); color: white; padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 800; }
+        
+        .progress-bg { background: #e9ecef; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 15px; }
+        .progress-fill { background: var(--secondary); height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+        
+        .admin-section { background: white; padding: 20px; border-radius: 12px; box-shadow: var(--card-shadow); border: 1px solid #eee; margin-bottom: 20px; }
+        .admin-section h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; }
+        .list-group { list-style: none; padding: 0; margin: 15px 0; max-height: 250px; overflow-y: auto; }
+        .list-group li { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; align-items: center; font-weight: 700; color: #555; }
+        .delete-btn { background: #ffebee; color: var(--danger); border: none; padding: 8px 12px; border-radius: 6px; font-weight: 800; cursor: pointer; }
+        
         .flex-row { display: flex; gap: 10px; margin-bottom: 10px; }
-        .import-box { background: #f8f9fa; padding: 10px; border: 1px dashed #ccc; border-radius: 5px; margin-bottom: 10px; }
+        .import-box { background: #f8f9fa; padding: 15px; border: 2px dashed #ddd; border-radius: 8px; margin-bottom: 15px; text-align: center; }
+        
+        /* Toast Notifications */
+        #toast {
+            visibility: hidden; min-width: 250px; background-color: #333; color: #fff;
+            text-align: center; border-radius: 30px; padding: 16px; position: fixed;
+            z-index: 2000; left: 50%; transform: translateX(-50%); bottom: 90px; 
+            font-weight: 700; opacity: 0; transition: opacity 0.3s, bottom 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        #toast.show { visibility: visible; opacity: 1; bottom: 100px; }
+        #toast.success { background-color: var(--success); }
+        #toast.error { background-color: var(--danger); }
         
         #printArea { display: none; }
         @media print {
@@ -55,31 +163,47 @@
 <body>
 
     <header>
-        <h2 style="margin: 0;">PL Training App</h2>
+        <h2 style="margin: 0; font-weight: 800;">PL Training App</h2>
     </header>
 
     <nav>
-        <button id="nav-assess" class="active" onclick="switchTab('assess')">Assess</button>
-        <button id="nav-history" onclick="switchTab('history')">History</button>
-        <button id="nav-dash" onclick="switchTab('dashboard')">Live Dashboard</button>
-        <button id="nav-admin" onclick="switchTab('admin')">Manage & QR</button>
+        <button id="nav-assess" class="active" onclick="switchTab('assess')">
+            <svg viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+            Assess
+        </button>
+        <button id="nav-history" onclick="switchTab('history')">
+            <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/><path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+            History
+        </button>
+        <button id="nav-dash" onclick="switchTab('dashboard')">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+            Dashboard
+        </button>
+        <button id="nav-admin" onclick="switchTab('admin')">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+            Manage
+        </button>
     </nav>
+
+    <!-- Custom Toast Notification -->
+    <div id="toast">Message here</div>
 
     <div class="container">
         
         <!-- 1. ASSESS TAB -->
         <div id="assess" class="tab-content active">
-            <div id="editWarning" style="display:none; background: #ffeb3b; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-weight: bold; text-align: center;">
-                Editing an Existing Assessment <button onclick="cancelEdit()" style="margin-left: 10px; padding: 5px 10px; cursor:pointer;">Cancel</button>
+            <div id="editWarning" style="display:none; background: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; margin-bottom: 15px; font-weight: 800; text-align: center; border: 1px solid #ffeeba;">
+                Editing Existing Assessment <br>
+                <button onclick="cancelEdit()" style="margin-top: 10px; padding: 8px 15px; cursor:pointer; background: #856404; color: white; border: none; border-radius: 5px; font-weight: bold;">Cancel Edit</button>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" style="background: white; padding: 15px; border-radius: 12px; box-shadow: var(--card-shadow);">
                 <label>Scan Scout QR Code (or select manually)</label>
                 <div id="reader"></div>
                 <select id="scoutSelect">
                     <option value="">-- Manual Fallback: Select Scout --</option>
                 </select>
-                <p id="scoutConfirm" style="color: green; font-weight: bold; margin-top: 5px;"></p>
+                <p id="scoutConfirm" style="color: var(--success); font-weight: 800; margin-top: 10px; text-align: center;"></p>
             </div>
 
             <div class="form-group">
@@ -110,7 +234,7 @@
                 <button class="action-btn" style="background: #333;" onclick="loadHistory()">Refresh History</button>
             </div>
             <div id="historyContainer">
-                <p>Click "Refresh History" to load past submissions.</p>
+                <p style="text-align:center; color: #666; font-weight: 700;">Click "Refresh History" to load past submissions.</p>
             </div>
         </div>
 
@@ -118,10 +242,10 @@
         <div id="dashboard" class="tab-content">
             <div style="margin-bottom: 20px; display: flex; gap: 10px;">
                 <button class="action-btn" style="background: #333; margin-bottom: 0;" onclick="renderDashboard()">Refresh Live Data</button>
-                <button class="action-btn" style="background: #17a2b8; margin-bottom: 0;" onclick="exportDashboard()">Export to CSV</button>
+                <button class="action-btn" style="background: var(--secondary); margin-bottom: 0;" onclick="exportDashboard()">Export to CSV</button>
             </div>
             <div id="dashboardContainer">
-                <p>Click "Refresh Live Data" to load Scout progress.</p>
+                <p style="text-align:center; color: #666; font-weight: 700;">Click "Refresh Live Data" to load Scout progress.</p>
             </div>
         </div>
 
@@ -131,33 +255,33 @@
                 <h3>Manage Scouts</h3>
                 
                 <div class="import-box">
-                    <label style="font-size: 14px;">Bulk Import Scouts (CSV: Name, Patrol)</label>
+                    <label style="font-size: 14px; margin-bottom: 10px;">Bulk Import Scouts (CSV: Name, Patrol)</label>
                     <input type="file" id="scoutCsvUpload" accept=".csv" style="margin-bottom: 10px;">
-                    <button class="action-btn" style="background: #17a2b8; padding: 10px; font-size: 14px;" onclick="importScoutsCSV()">Import CSV</button>
+                    <button class="action-btn" style="background: var(--secondary); padding: 10px; font-size: 14px;" onclick="importScoutsCSV()">Import CSV</button>
                 </div>
 
                 <div class="flex-row" style="margin-top: 15px;">
                     <input type="text" id="newScoutName" placeholder="Scout Name">
                     <input type="text" id="newScoutPatrol" placeholder="Patrol">
                 </div>
-                <button class="action-btn" style="padding: 10px;" onclick="addScout()">Add Single Scout</button>
+                <button class="action-btn" style="padding: 12px;" onclick="addScout()">Add Single Scout</button>
                 <ul id="adminScoutList" class="list-group"></ul>
-                <button class="action-btn" style="background: #28a745; margin-top: 15px;" onclick="printQRCodes()">Print QR Code Badges</button>
+                <button class="action-btn" style="background: var(--success); margin-top: 15px;" onclick="printQRCodes()">Print QR Code Badges</button>
             </div>
 
             <div class="admin-section">
                 <h3>Manage Activities / Bases</h3>
                 
                 <div class="import-box">
-                    <label style="font-size: 14px;">Bulk Import Activities (CSV: Activity Name)</label>
+                    <label style="font-size: 14px; margin-bottom: 10px;">Bulk Import Activities (CSV: Activity Name)</label>
                     <input type="file" id="activityCsvUpload" accept=".csv" style="margin-bottom: 10px;">
-                    <button class="action-btn" style="background: #17a2b8; padding: 10px; font-size: 14px;" onclick="importActivitiesCSV()">Import CSV</button>
+                    <button class="action-btn" style="background: var(--secondary); padding: 10px; font-size: 14px;" onclick="importActivitiesCSV()">Import CSV</button>
                 </div>
 
                 <div class="flex-row" style="margin-top: 15px;">
                     <input type="text" id="newActivityName" placeholder="Activity Name">
                 </div>
-                <button class="action-btn" style="padding: 10px;" onclick="addActivity()">Add Single Activity</button>
+                <button class="action-btn" style="padding: 12px;" onclick="addActivity()">Add Single Activity</button>
                 <ul id="adminActivityList" class="list-group"></ul>
             </div>
         </div>
@@ -196,6 +320,14 @@
         let globalAssessments = [];
         let editingAssessmentId = null;
 
+        // Custom Toast Function
+        function showToast(message, type = "success") {
+            const toast = document.getElementById("toast");
+            toast.innerText = message;
+            toast.className = "show " + type;
+            setTimeout(() => { toast.className = toast.className.replace("show " + type, ""); }, 3000);
+        }
+
         window.onload = () => { 
             buildCriteriaForm();
             refreshDropdownsAndLists();
@@ -207,11 +339,16 @@
             criteria.forEach((crit, index) => {
                 criteriaContainer.innerHTML += `
                     <div class="criteria-row">
-                        <label>${crit}</label>
+                        <label class="crit-title">${crit}</label>
                         <div class="radio-group">
-                            <label><input type="radio" name="crit_${index}" value="Y"> Yes</label>
-                            <label><input type="radio" name="crit_${index}" value="N"> No</label>
-                            <label><input type="radio" name="crit_${index}" value="NOB" checked> Not observed</label>
+                            <input type="radio" id="crit_${index}_y" name="crit_${index}" value="Y">
+                            <label class="tap-target" for="crit_${index}_y">Yes</label>
+                            
+                            <input type="radio" id="crit_${index}_n" name="crit_${index}" value="N">
+                            <label class="tap-target" for="crit_${index}_n">No</label>
+                            
+                            <input type="radio" id="crit_${index}_nob" name="crit_${index}" value="NOB" checked>
+                            <label class="tap-target" for="crit_${index}_nob">N/A</label>
                         </div>
                     </div>
                 `;
@@ -230,18 +367,18 @@
 
             const adminScoutList = document.getElementById('adminScoutList');
             adminScoutList.innerHTML = '';
-            configuredScouts.forEach((s, index) => adminScoutList.innerHTML += `<li>${s.name} - ${s.patrol} <button class="delete-btn" onclick="deleteScout(${index})">X</button></li>`);
+            configuredScouts.forEach((s, index) => adminScoutList.innerHTML += `<li>${s.name} - ${s.patrol} <button class="delete-btn" onclick="deleteScout(${index})">Delete</button></li>`);
 
             const adminActivityList = document.getElementById('adminActivityList');
             adminActivityList.innerHTML = '';
-            configuredActivities.forEach((act, index) => adminActivityList.innerHTML += `<li>${act} <button class="delete-btn" onclick="deleteActivity(${index})">X</button></li>`);
+            configuredActivities.forEach((act, index) => adminActivityList.innerHTML += `<li>${act} <button class="delete-btn" onclick="deleteActivity(${index})">Delete</button></li>`);
         }
 
         // ---------- IMPORT DATA (CSV) ---------- //
 
         function importScoutsCSV() {
             const file = document.getElementById('scoutCsvUpload').files[0];
-            if(!file) return alert("Please select a CSV file first.");
+            if(!file) return showToast("Please select a CSV file first.", "error");
             
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -254,7 +391,6 @@
                     if(parts.length >= 2) {
                         const name = parts[0].trim();
                         const patrol = parts[1].trim();
-                        // Skip obvious header rows
                         if(name && patrol && name.toLowerCase() !== 'name' && name.toLowerCase() !== 'scout') { 
                             configuredScouts.push({ name, patrol });
                             count++;
@@ -265,14 +401,14 @@
                 localStorage.setItem('pl_scouts', JSON.stringify(configuredScouts));
                 refreshDropdownsAndLists();
                 document.getElementById('scoutCsvUpload').value = "";
-                alert(`Successfully imported ${count} Scouts!`);
+                showToast(`Successfully imported ${count} Scouts!`);
             };
             reader.readAsText(file);
         }
 
         function importActivitiesCSV() {
             const file = document.getElementById('activityCsvUpload').files[0];
-            if(!file) return alert("Please select a CSV file first.");
+            if(!file) return showToast("Please select a CSV file first.", "error");
             
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -281,7 +417,7 @@
                 let count = 0;
                 
                 lines.forEach(line => {
-                    const act = line.trim().replace(/,/g, ''); // strip stray commas
+                    const act = line.trim().replace(/,/g, ''); 
                     if(act && act.toLowerCase() !== 'activity' && act.toLowerCase() !== 'base') {
                         configuredActivities.push(act);
                         count++;
@@ -291,7 +427,7 @@
                 localStorage.setItem('pl_activities', JSON.stringify(configuredActivities));
                 refreshDropdownsAndLists();
                 document.getElementById('activityCsvUpload').value = "";
-                alert(`Successfully imported ${count} Activities!`);
+                showToast(`Successfully imported ${count} Activities!`);
             };
             reader.readAsText(file);
         }
@@ -301,12 +437,13 @@
         function addScout() {
             const name = document.getElementById('newScoutName').value.trim();
             const patrol = document.getElementById('newScoutPatrol').value.trim();
-            if(!name || !patrol) return alert("Please enter both Name and Patrol.");
+            if(!name || !patrol) return showToast("Please enter both Name and Patrol.", "error");
             configuredScouts.push({ name, patrol });
             localStorage.setItem('pl_scouts', JSON.stringify(configuredScouts));
             document.getElementById('newScoutName').value = "";
             document.getElementById('newScoutPatrol').value = "";
             refreshDropdownsAndLists();
+            showToast("Scout Added");
         }
 
         function deleteScout(index) {
@@ -322,6 +459,7 @@
             localStorage.setItem('pl_activities', JSON.stringify(configuredActivities));
             document.getElementById('newActivityName').value = "";
             refreshDropdownsAndLists();
+            showToast("Activity Added");
         }
 
         function deleteActivity(index) {
@@ -331,31 +469,22 @@
         }
 
         function printQRCodes() {
-            if(configuredScouts.length === 0) return alert("Add some Scouts first.");
+            if(configuredScouts.length === 0) return showToast("Add some Scouts first.", "error");
             const printArea = document.getElementById('printArea');
             printArea.innerHTML = '';
 
             configuredScouts.forEach(scout => {
                 const card = document.createElement('div');
                 card.className = 'qr-card';
-                
-                const qr = new QRious({ 
-                    value: `${scout.name} (${scout.patrol})`, 
-                    size: 150 
-                });
-                
+                const qr = new QRious({ value: `${scout.name} (${scout.patrol})`, size: 150 });
                 card.innerHTML = `
                     <img src="${qr.toDataURL()}" alt="QR Code">
                     <h4>${scout.name}</h4>
                     <p style="margin: 0; font-size: 14px; color: #555;">${scout.patrol}</p>
                 `;
-                
                 printArea.appendChild(card);
             });
-            
-            setTimeout(() => {
-                window.print();
-            }, 300);
+            setTimeout(() => { window.print(); }, 300);
         }
 
         function switchTab(tabId) {
@@ -378,6 +507,7 @@
                         if (!Array.from(select.options).some(opt => opt.value === decodedText)) select.add(new Option(decodedText, decodedText));
                         select.value = decodedText; 
                         document.getElementById('scoutConfirm').innerText = `✓ Scout Locked: ${decodedText}`;
+                        showToast(`Scanned: ${decodedText}`);
                         html5QrcodeScanner.pause();
                         setTimeout(() => html5QrcodeScanner.resume(), 3000); 
                     }, () => {});
@@ -393,7 +523,7 @@
             const assessor = document.getElementById('assessorName').value;
             const comments = document.getElementById('comments').value;
 
-            if(!scout || !activity || !assessor) return alert("Please fill in Scout, Assessor, and Activity.");
+            if(!scout || !activity || !assessor) return showToast("Missing Scout, Assessor, or Activity.", "error");
 
             let results = [];
             let yCount = 0;
@@ -406,13 +536,10 @@
             const recordId = editingAssessmentId || new Date().getTime().toString();
             const record = { id: recordId, scout, activity, assessor, results, yCount, comments };
             
-            const payload = {
-                action: editingAssessmentId ? "edit" : "add",
-                record: record
-            };
+            const payload = { action: editingAssessmentId ? "edit" : "add", record: record };
 
             const submitBtn = document.querySelector('.submit-btn');
-            submitBtn.innerText = "Submitting to Server...";
+            submitBtn.innerText = "Submitting...";
             submitBtn.disabled = true;
 
             try {
@@ -421,10 +548,10 @@
                     body: JSON.stringify(payload)
                 });
                 
-                alert(editingAssessmentId ? "Assessment Updated!" : "Assessment Saved!");
+                showToast(editingAssessmentId ? "Assessment Updated!" : "Assessment Saved!");
                 cancelEdit(); 
             } catch (error) {
-                alert("Failed to submit. Please check your internet connection.");
+                showToast("Failed to submit. Check connection.", "error");
             } finally {
                 submitBtn.innerText = "Submit Assessment";
                 submitBtn.disabled = false;
@@ -457,8 +584,8 @@
                             <p style="margin: 5px 0 10px 0; font-size: 14px; color: #444;">${a.activity} (Assessor: ${a.assessor})</p>
                             ${isEditable ? `
                                 <div style="display: flex; gap: 10px;">
-                                    <button class="action-btn" style="padding: 8px; margin: 0; background: #17a2b8;" onclick="startEdit('${a.id}')">Edit</button>
-                                    <button class="action-btn" style="padding: 8px; margin: 0; background: #dc3545;" onclick="deleteAssessment('${a.id}')">Delete</button>
+                                    <button class="action-btn" style="padding: 8px; margin: 0; background: var(--secondary);" onclick="startEdit('${a.id}')">Edit</button>
+                                    <button class="action-btn" style="padding: 8px; margin: 0; background: var(--danger);" onclick="deleteAssessment('${a.id}')">Delete</button>
                                 </div>
                             ` : `<p style="font-size:11px; color:#999; margin:0;">Legacy record (Cannot edit from app)</p>`}
                         </div>
@@ -474,7 +601,7 @@
             editingAssessmentId = id;
             document.getElementById('editWarning').style.display = 'block';
             document.querySelector('.submit-btn').innerText = "Update Assessment";
-            document.querySelector('.submit-btn').style.background = "#17a2b8";
+            document.querySelector('.submit-btn').style.background = "var(--secondary)";
             
             const select = document.getElementById('scoutSelect');
             if (!Array.from(select.options).some(opt => opt.value === record.scout)) select.add(new Option(record.scout, record.scout));
@@ -512,10 +639,10 @@
                     method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" },
                     body: JSON.stringify({ action: "delete", id: id })
                 });
-                alert("Assessment Deleted!");
+                showToast("Assessment Deleted!");
                 loadHistory(); 
             } catch (error) {
-                alert("Failed to delete. Check your connection.");
+                showToast("Failed to delete. Check connection.", "error");
             }
         }
 
@@ -545,29 +672,32 @@
                     let totalScore = demonstratedCriteria.size;
                     let pct = Math.round((totalScore / 9) * 100);
                     
-                    let criteriaHtml = "<ul style='padding-left: 20px; font-size: 14px;'>";
+                    let criteriaHtml = "<ul style='padding-left: 20px; font-size: 14px; margin-bottom: 0;'>";
                     criteria.forEach(crit => {
-                        if(demonstratedCriteria.has(crit)) criteriaHtml += `<li style="color: green; margin-bottom: 5px;"><strong>✓</strong> ${crit}</li>`;
-                        else criteriaHtml += `<li style="color: gray; margin-bottom: 5px;">○ ${crit}</li>`;
+                        if(demonstratedCriteria.has(crit)) criteriaHtml += `<li style="color: var(--success); margin-bottom: 5px; font-weight: 700;">✓ ${crit}</li>`;
+                        else criteriaHtml += `<li style="color: #999; margin-bottom: 5px;">○ ${crit}</li>`;
                     });
                     criteriaHtml += "</ul>";
 
                     dash.innerHTML += `
                         <div class="dashboard-card">
                             <div class="scout-header">
-                                <h3 style="margin: 0;">${scoutName}</h3>
-                                <span class="badge">${totalScore}/9 Attributes (${pct}%)</span>
+                                <h3>${scoutName}</h3>
+                                <span class="badge">${totalScore}/9 (${pct}%)</span>
                             </div>
-                            <p style="font-size: 13px; color: #666; margin-top: 0;">Assessed at: ${records.map(r => r.activity).join(', ')}</p>
+                            <div class="progress-bg">
+                                <div class="progress-fill" style="width: ${pct}%;"></div>
+                            </div>
+                            <p style="font-size: 13px; color: #666; margin-top: 0; font-weight: 700;">Assessed at: ${records.map(r => r.activity).join(', ')}</p>
                             ${criteriaHtml}
                         </div>
                     `;
                 }
-            } catch (error) { dash.innerHTML = "<p style='color: red; text-align:center;'>Failed to load data.</p>"; }
+            } catch (error) { dash.innerHTML = "<p style='color: var(--danger); text-align:center;'>Failed to load data.</p>"; }
         }
 
         function exportDashboard() {
-            if (globalAssessments.length === 0) return alert("No data available to export. Please refresh the live dashboard first.");
+            if (globalAssessments.length === 0) return showToast("No data to export. Refresh first.", "error");
             
             let csvContent = "Timestamp,Scout,Activity,Assessor," + criteria.map(c => `"${c}"`).join(",") + ",Total Ys,Comments\n";
             
