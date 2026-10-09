@@ -13,8 +13,8 @@
     
     <style>
         :root { 
-            --primary: #7413dc; 
-            --secondary: #00a794; 
+            --primary: #7413dc; /* Scout Purple */
+            --secondary: #00a794; /* Scout Teal */
             --bg: #f4f4f9; 
             --text: #333; 
             --danger: #e30043;
@@ -27,7 +27,7 @@
             background-color: var(--bg); 
             color: var(--text); 
             margin: 0; 
-            padding: 0 0 80px 0; 
+            padding: 0 0 80px 0; /* Space for bottom nav */
             -webkit-tap-highlight-color: transparent;
         }
         
@@ -39,6 +39,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
+        /* Mobile-App Bottom Navigation */
         nav { 
             position: fixed; 
             bottom: 0; 
@@ -49,7 +50,7 @@
             background: white; 
             box-shadow: 0 -2px 10px rgba(0,0,0,0.05); 
             z-index: 1000;
-            padding: 5px 0 15px 0; 
+            padding: 5px 0 15px 0; /* Extra padding for modern phones */
         }
         nav button { 
             flex: 1; 
@@ -75,6 +76,7 @@
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
+        /* Form & Cards */
         .form-group { margin-bottom: 20px; }
         label { display: block; font-weight: 800; margin-bottom: 8px; font-size: 14px; color: #555; }
         select, input[type="text"], textarea, input[type="file"] { 
@@ -94,22 +96,29 @@
         }
         button.action-btn:active { transform: translateY(2px); box-shadow: 0 2px 4px rgba(116, 19, 220, 0.2); }
         
+        /* Touch-Friendly Radio Buttons */
         .criteria-row { background: white; padding: 15px; margin-bottom: 12px; border-radius: 12px; box-shadow: var(--card-shadow); border: 1px solid #f0f0f0; }
         .criteria-row label.crit-title { font-size: 15px; color: #222; margin-bottom: 12px; display: block; line-height: 1.3; }
         .radio-group { display: flex; gap: 8px; }
+        
+        /* Hide default radios */
         .radio-group input[type="radio"] { display: none; }
+        
+        /* Style the labels as large tap targets */
         .radio-group label.tap-target {
             flex: 1; text-align: center; padding: 12px 5px; border-radius: 8px; 
             background: #f4f4f4; border: 2px solid transparent; 
             font-weight: 700; font-size: 14px; color: #666; 
             cursor: pointer; transition: all 0.2s;
         }
+        /* Active states */
         .radio-group input[value="Y"]:checked + label { background: #e8f5e9; border-color: var(--success); color: var(--success); }
         .radio-group input[value="N"]:checked + label { background: #ffebee; border-color: var(--danger); color: var(--danger); }
         .radio-group input[value="NOB"]:checked + label { background: #e0e0e0; border-color: #999; color: #333; }
         
         #reader { width: 100%; max-width: 400px; margin: 0 auto 15px auto; border-radius: 12px; overflow: hidden; box-shadow: var(--card-shadow); border: none; }
         
+        /* Dashboard Cards & Progress Bar */
         .dashboard-card { background: white; padding: 20px; margin-bottom: 15px; border-radius: 12px; box-shadow: var(--card-shadow); border: 1px solid #eee; border-left: 5px solid var(--secondary); }
         .scout-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 15px; }
         .scout-header h3 { font-size: 18px; margin: 0; color: #111; }
@@ -127,6 +136,7 @@
         .flex-row { display: flex; gap: 10px; margin-bottom: 10px; }
         .import-box { background: #f8f9fa; padding: 15px; border: 2px dashed #ddd; border-radius: 8px; margin-bottom: 15px; text-align: center; }
         
+        /* Toast Notifications */
         #toast {
             visibility: hidden; min-width: 250px; background-color: #333; color: #fff;
             text-align: center; border-radius: 30px; padding: 16px; position: fixed;
@@ -175,6 +185,7 @@
         </button>
     </nav>
 
+    <!-- Custom Toast Notification -->
     <div id="toast">Message here</div>
 
     <div class="container">
@@ -277,6 +288,7 @@
 
     </div>
 
+    <!-- Hidden area exclusively for printing QR codes -->
     <div id="printArea"></div>
 
     <script>
@@ -308,6 +320,7 @@
         let globalAssessments = [];
         let editingAssessmentId = null;
 
+        // Custom Toast Function
         function showToast(message, type = "success") {
             const toast = document.getElementById("toast");
             toast.innerText = message;
@@ -354,17 +367,7 @@
 
             const adminScoutList = document.getElementById('adminScoutList');
             adminScoutList.innerHTML = '';
-            configuredScouts.forEach((s, index) => {
-                adminScoutList.innerHTML += `
-                    <li style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
-                        <span style="flex-grow: 1;">${s.name} - <strong style="color: var(--secondary);">${s.patrol}</strong></span>
-                        <div style="display: flex; gap: 8px;">
-                            <button style="background: #17a2b8; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 800; cursor: pointer; font-family: 'Nunito Sans', sans-serif;" onclick="editScout(${index})">Edit</button>
-                            <button class="delete-btn" style="padding: 6px 12px;" onclick="deleteScout(${index})">Delete</button>
-                        </div>
-                    </li>
-                `;
-            });
+            configuredScouts.forEach((s, index) => adminScoutList.innerHTML += `<li>${s.name} - ${s.patrol} <button class="delete-btn" onclick="deleteScout(${index})">Delete</button></li>`);
 
             const adminActivityList = document.getElementById('adminActivityList');
             adminActivityList.innerHTML = '';
@@ -374,4 +377,5 @@
         // ---------- IMPORT DATA (CSV) ---------- //
 
         function importScoutsCSV() {
-            const fi
+            const file = document.getElementById('scoutCsvUpload').files[0];
+            if(!file) return showToast("Please select a CSV file 
