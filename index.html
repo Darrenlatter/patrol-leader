@@ -13,8 +13,8 @@
     
     <style>
         :root { 
-            --primary: #7413dc; /* Scout Purple */
-            --secondary: #00a794; /* Scout Teal */
+            --primary: #7413dc; 
+            --secondary: #00a794; 
             --bg: #f4f4f9; 
             --text: #333; 
             --danger: #e30043;
@@ -27,7 +27,7 @@
             background-color: var(--bg); 
             color: var(--text); 
             margin: 0; 
-            padding: 0 0 80px 0; /* Space for bottom nav */
+            padding: 0 0 80px 0; 
             -webkit-tap-highlight-color: transparent;
         }
         
@@ -39,7 +39,6 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
-        /* Mobile-App Bottom Navigation */
         nav { 
             position: fixed; 
             bottom: 0; 
@@ -50,7 +49,7 @@
             background: white; 
             box-shadow: 0 -2px 10px rgba(0,0,0,0.05); 
             z-index: 1000;
-            padding: 5px 0 15px 0; /* Extra padding for modern phones */
+            padding: 5px 0 15px 0; 
         }
         nav button { 
             flex: 1; 
@@ -76,7 +75,6 @@
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Form & Cards */
         .form-group { margin-bottom: 20px; }
         label { display: block; font-weight: 800; margin-bottom: 8px; font-size: 14px; color: #555; }
         select, input[type="text"], textarea, input[type="file"] { 
@@ -96,29 +94,22 @@
         }
         button.action-btn:active { transform: translateY(2px); box-shadow: 0 2px 4px rgba(116, 19, 220, 0.2); }
         
-        /* Touch-Friendly Radio Buttons */
         .criteria-row { background: white; padding: 15px; margin-bottom: 12px; border-radius: 12px; box-shadow: var(--card-shadow); border: 1px solid #f0f0f0; }
         .criteria-row label.crit-title { font-size: 15px; color: #222; margin-bottom: 12px; display: block; line-height: 1.3; }
         .radio-group { display: flex; gap: 8px; }
-        
-        /* Hide default radios */
         .radio-group input[type="radio"] { display: none; }
-        
-        /* Style the labels as large tap targets */
         .radio-group label.tap-target {
             flex: 1; text-align: center; padding: 12px 5px; border-radius: 8px; 
             background: #f4f4f4; border: 2px solid transparent; 
             font-weight: 700; font-size: 14px; color: #666; 
             cursor: pointer; transition: all 0.2s;
         }
-        /* Active states */
         .radio-group input[value="Y"]:checked + label { background: #e8f5e9; border-color: var(--success); color: var(--success); }
         .radio-group input[value="N"]:checked + label { background: #ffebee; border-color: var(--danger); color: var(--danger); }
         .radio-group input[value="NOB"]:checked + label { background: #e0e0e0; border-color: #999; color: #333; }
         
         #reader { width: 100%; max-width: 400px; margin: 0 auto 15px auto; border-radius: 12px; overflow: hidden; box-shadow: var(--card-shadow); border: none; }
         
-        /* Dashboard Cards & Progress Bar */
         .dashboard-card { background: white; padding: 20px; margin-bottom: 15px; border-radius: 12px; box-shadow: var(--card-shadow); border: 1px solid #eee; border-left: 5px solid var(--secondary); }
         .scout-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 15px; }
         .scout-header h3 { font-size: 18px; margin: 0; color: #111; }
@@ -136,7 +127,6 @@
         .flex-row { display: flex; gap: 10px; margin-bottom: 10px; }
         .import-box { background: #f8f9fa; padding: 15px; border: 2px dashed #ddd; border-radius: 8px; margin-bottom: 15px; text-align: center; }
         
-        /* Toast Notifications */
         #toast {
             visibility: hidden; min-width: 250px; background-color: #333; color: #fff;
             text-align: center; border-radius: 30px; padding: 16px; position: fixed;
@@ -185,7 +175,6 @@
         </button>
     </nav>
 
-    <!-- Custom Toast Notification -->
     <div id="toast">Message here</div>
 
     <div class="container">
@@ -288,7 +277,6 @@
 
     </div>
 
-    <!-- Hidden area exclusively for printing QR codes -->
     <div id="printArea"></div>
 
     <script>
@@ -320,7 +308,6 @@
         let globalAssessments = [];
         let editingAssessmentId = null;
 
-        // Custom Toast Function
         function showToast(message, type = "success") {
             const toast = document.getElementById("toast");
             toast.innerText = message;
@@ -367,7 +354,17 @@
 
             const adminScoutList = document.getElementById('adminScoutList');
             adminScoutList.innerHTML = '';
-            configuredScouts.forEach((s, index) => adminScoutList.innerHTML += `<li>${s.name} - ${s.patrol} <button class="delete-btn" onclick="deleteScout(${index})">Delete</button></li>`);
+            configuredScouts.forEach((s, index) => {
+                adminScoutList.innerHTML += `
+                    <li style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                        <span style="flex-grow: 1;">${s.name} - <strong style="color: var(--secondary);">${s.patrol}</strong></span>
+                        <div style="display: flex; gap: 8px;">
+                            <button style="background: #17a2b8; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 800; cursor: pointer; font-family: 'Nunito Sans', sans-serif;" onclick="editScout(${index})">Edit</button>
+                            <button class="delete-btn" style="padding: 6px 12px;" onclick="deleteScout(${index})">Delete</button>
+                        </div>
+                    </li>
+                `;
+            });
 
             const adminActivityList = document.getElementById('adminActivityList');
             adminActivityList.innerHTML = '';
@@ -377,353 +374,4 @@
         // ---------- IMPORT DATA (CSV) ---------- //
 
         function importScoutsCSV() {
-            const file = document.getElementById('scoutCsvUpload').files[0];
-            if(!file) return showToast("Please select a CSV file first.", "error");
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const text = e.target.result;
-                const lines = text.split('\n');
-                let count = 0;
-                
-                lines.forEach(line => {
-                    const parts = line.split(',');
-                    if(parts.length >= 2) {
-                        const name = parts[0].trim();
-                        const patrol = parts[1].trim();
-                        if(name && patrol && name.toLowerCase() !== 'name' && name.toLowerCase() !== 'scout') { 
-                            configuredScouts.push({ name, patrol });
-                            count++;
-                        }
-                    }
-                });
-                
-                localStorage.setItem('pl_scouts', JSON.stringify(configuredScouts));
-                refreshDropdownsAndLists();
-                document.getElementById('scoutCsvUpload').value = "";
-                showToast(`Successfully imported ${count} Scouts!`);
-            };
-            reader.readAsText(file);
-        }
-
-        function importActivitiesCSV() {
-            const file = document.getElementById('activityCsvUpload').files[0];
-            if(!file) return showToast("Please select a CSV file first.", "error");
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const text = e.target.result;
-                const lines = text.split('\n');
-                let count = 0;
-                
-                lines.forEach(line => {
-                    const act = line.trim().replace(/,/g, ''); 
-                    if(act && act.toLowerCase() !== 'activity' && act.toLowerCase() !== 'base') {
-                        configuredActivities.push(act);
-                        count++;
-                    }
-                });
-                
-                localStorage.setItem('pl_activities', JSON.stringify(configuredActivities));
-                refreshDropdownsAndLists();
-                document.getElementById('activityCsvUpload').value = "";
-                showToast(`Successfully imported ${count} Activities!`);
-            };
-            reader.readAsText(file);
-        }
-
-        // ---------- MANAGE DATA ---------- //
-
-        function addScout() {
-            const name = document.getElementById('newScoutName').value.trim();
-            const patrol = document.getElementById('newScoutPatrol').value.trim();
-            if(!name || !patrol) return showToast("Please enter both Name and Patrol.", "error");
-            configuredScouts.push({ name, patrol });
-            localStorage.setItem('pl_scouts', JSON.stringify(configuredScouts));
-            document.getElementById('newScoutName').value = "";
-            document.getElementById('newScoutPatrol').value = "";
-            refreshDropdownsAndLists();
-            showToast("Scout Added");
-        }
-
-        function deleteScout(index) {
-            configuredScouts.splice(index, 1);
-            localStorage.setItem('pl_scouts', JSON.stringify(configuredScouts));
-            refreshDropdownsAndLists();
-        }
-
-        function addActivity() {
-            const act = document.getElementById('newActivityName').value.trim();
-            if(!act) return;
-            configuredActivities.push(act);
-            localStorage.setItem('pl_activities', JSON.stringify(configuredActivities));
-            document.getElementById('newActivityName').value = "";
-            refreshDropdownsAndLists();
-            showToast("Activity Added");
-        }
-
-        function deleteActivity(index) {
-            configuredActivities.splice(index, 1);
-            localStorage.setItem('pl_activities', JSON.stringify(configuredActivities));
-            refreshDropdownsAndLists();
-        }
-
-        function printQRCodes() {
-            if(configuredScouts.length === 0) return showToast("Add some Scouts first.", "error");
-            const printArea = document.getElementById('printArea');
-            printArea.innerHTML = '';
-
-            configuredScouts.forEach(scout => {
-                const card = document.createElement('div');
-                card.className = 'qr-card';
-                const qr = new QRious({ value: `${scout.name} (${scout.patrol})`, size: 150 });
-                card.innerHTML = `
-                    <img src="${qr.toDataURL()}" alt="QR Code">
-                    <h4>${scout.name}</h4>
-                    <p style="margin: 0; font-size: 14px; color: #555;">${scout.patrol}</p>
-                `;
-                printArea.appendChild(card);
-            });
-            setTimeout(() => { window.print(); }, 300);
-        }
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            
-            if (tabId === 'assess') document.getElementById('nav-assess').classList.add('active');
-            else if (tabId === 'history') { document.getElementById('nav-history').classList.add('active'); loadHistory(); }
-            else if (tabId === 'dashboard') { document.getElementById('nav-dash').classList.add('active'); renderDashboard(); }
-            else if (tabId === 'admin') document.getElementById('nav-admin').classList.add('active');
-        }
-
-        function initScanner() {
-            try {
-                if (!html5QrcodeScanner) {
-                    html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
-                    html5QrcodeScanner.render((decodedText) => {
-                        const select = document.getElementById('scoutSelect');
-                        if (!Array.from(select.options).some(opt => opt.value === decodedText)) select.add(new Option(decodedText, decodedText));
-                        select.value = decodedText; 
-                        document.getElementById('scoutConfirm').innerText = `✓ Scout Locked: ${decodedText}`;
-                        showToast(`Scanned: ${decodedText}`);
-                        html5QrcodeScanner.pause();
-                        setTimeout(() => html5QrcodeScanner.resume(), 3000); 
-                    }, () => {});
-                }
-            } catch (e) { console.error(e); }
-        }
-
-        // ---------- EDIT & DELETE LOGIC ---------- //
-
-        async function submitAssessment() {
-            const scout = document.getElementById('scoutSelect').value;
-            const activity = document.getElementById('activitySelect').value;
-            const assessor = document.getElementById('assessorName').value;
-            const comments = document.getElementById('comments').value;
-
-            if(!scout || !activity || !assessor) return showToast("Missing Scout, Assessor, or Activity.", "error");
-
-            let results = [];
-            let yCount = 0;
-            criteria.forEach((crit, index) => {
-                const val = document.querySelector(`input[name="crit_${index}"]:checked`).value;
-                results.push({ criterion: crit, score: val });
-                if(val === 'Y') yCount++;
-            });
-
-            const recordId = editingAssessmentId || new Date().getTime().toString();
-            const record = { id: recordId, scout, activity, assessor, results, yCount, comments };
-            
-            const payload = { action: editingAssessmentId ? "edit" : "add", record: record };
-
-            const submitBtn = document.querySelector('.submit-btn');
-            submitBtn.innerText = "Submitting...";
-            submitBtn.disabled = true;
-
-            try {
-                await fetch(WEB_APP_URL, {
-                    method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" },
-                    body: JSON.stringify(payload)
-                });
-                
-                showToast(editingAssessmentId ? "Assessment Updated!" : "Assessment Saved!");
-                cancelEdit(); 
-            } catch (error) {
-                showToast("Failed to submit. Check connection.", "error");
-            } finally {
-                submitBtn.innerText = "Submit Assessment";
-                submitBtn.disabled = false;
-            }
-        }
-
-        async function loadHistory() {
-            const hist = document.getElementById('historyContainer');
-            hist.innerHTML = "<p style='text-align:center;'>Fetching history from server...</p>";
-            try {
-                const response = await fetch(WEB_APP_URL);
-                globalAssessments = await response.json();
-                
-                if(globalAssessments.length === 0) {
-                    hist.innerHTML = "<p style='text-align:center;'>No assessments recorded yet.</p>";
-                    return;
-                }
-                
-                hist.innerHTML = "";
-                [...globalAssessments].reverse().forEach(a => {
-                    const timeString = new Date(a.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    const isEditable = a.id ? true : false; 
-                    
-                    hist.innerHTML += `
-                        <div class="dashboard-card" style="border-left: 4px solid var(--primary);">
-                            <div style="display:flex; justify-content: space-between; align-items: center;">
-                                <strong style="font-size:16px;">${a.scout}</strong>
-                                <span style="font-size: 12px; color: #666;">${timeString}</span>
-                            </div>
-                            <p style="margin: 5px 0 10px 0; font-size: 14px; color: #444;">${a.activity} (Assessor: ${a.assessor})</p>
-                            ${isEditable ? `
-                                <div style="display: flex; gap: 10px;">
-                                    <button class="action-btn" style="padding: 8px; margin: 0; background: var(--secondary);" onclick="startEdit('${a.id}')">Edit</button>
-                                    <button class="action-btn" style="padding: 8px; margin: 0; background: var(--danger);" onclick="deleteAssessment('${a.id}')">Delete</button>
-                                </div>
-                            ` : `<p style="font-size:11px; color:#999; margin:0;">Legacy record (Cannot edit from app)</p>`}
-                        </div>
-                    `;
-                });
-            } catch (error) { hist.innerHTML = "<p style='color:red; text-align:center;'>Failed to load history.</p>"; }
-        }
-
-        function startEdit(id) {
-            const record = globalAssessments.find(a => a.id == id);
-            if(!record) return;
-            
-            editingAssessmentId = id;
-            document.getElementById('editWarning').style.display = 'block';
-            document.querySelector('.submit-btn').innerText = "Update Assessment";
-            document.querySelector('.submit-btn').style.background = "var(--secondary)";
-            
-            const select = document.getElementById('scoutSelect');
-            if (!Array.from(select.options).some(opt => opt.value === record.scout)) select.add(new Option(record.scout, record.scout));
-            select.value = record.scout;
-            
-            document.getElementById('assessorName').value = record.assessor;
-            document.getElementById('activitySelect').value = record.activity;
-            document.getElementById('comments').value = record.comments;
-            
-            record.results.forEach((res, index) => {
-                const radio = document.querySelector(`input[name="crit_${index}"][value="${res.score}"]`);
-                if(radio) radio.checked = true;
-            });
-            
-            switchTab('assess');
-        }
-
-        function cancelEdit() {
-            editingAssessmentId = null;
-            document.getElementById('editWarning').style.display = 'none';
-            document.querySelector('.submit-btn').innerText = "Submit Assessment";
-            document.querySelector('.submit-btn').style.background = "var(--primary)";
-            
-            document.getElementById('scoutConfirm').innerText = "";
-            document.getElementById('scoutSelect').value = "";
-            document.getElementById('comments').value = "";
-            criteria.forEach((crit, index) => document.querySelector(`input[name="crit_${index}"][value="NOB"]`).checked = true);
-        }
-
-        async function deleteAssessment(id) {
-            if(!confirm("Are you sure you want to delete this assessment? This cannot be undone.")) return;
-            
-            try {
-                await fetch(WEB_APP_URL, {
-                    method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" },
-                    body: JSON.stringify({ action: "delete", id: id })
-                });
-                showToast("Assessment Deleted!");
-                loadHistory(); 
-            } catch (error) {
-                showToast("Failed to delete. Check connection.", "error");
-            }
-        }
-
-        // ---------- DASHBOARD & EXPORT ---------- //
-
-        async function renderDashboard() {
-            const dash = document.getElementById('dashboardContainer');
-            dash.innerHTML = "<p style='text-align:center;'>Fetching live data from server...</p>";
-
-            try {
-                const response = await fetch(WEB_APP_URL);
-                globalAssessments = await response.json();
-
-                if(globalAssessments.length === 0) { dash.innerHTML = "<p style='text-align:center;'>No assessments recorded yet.</p>"; return; }
-
-                dash.innerHTML = "";
-                const grouped = {};
-                globalAssessments.forEach(a => {
-                    if(!grouped[a.scout]) grouped[a.scout] = [];
-                    grouped[a.scout].push(a);
-                });
-
-                for (const [scoutName, records] of Object.entries(grouped)) {
-                    let demonstratedCriteria = new Set();
-                    records.forEach(rec => rec.results.forEach(res => { if(res.score === 'Y') demonstratedCriteria.add(res.criterion); }));
-
-                    let totalScore = demonstratedCriteria.size;
-                    let pct = Math.round((totalScore / 9) * 100);
-                    
-                    let criteriaHtml = "<ul style='padding-left: 20px; font-size: 14px; margin-bottom: 0;'>";
-                    criteria.forEach(crit => {
-                        if(demonstratedCriteria.has(crit)) criteriaHtml += `<li style="color: var(--success); margin-bottom: 5px; font-weight: 700;">✓ ${crit}</li>`;
-                        else criteriaHtml += `<li style="color: #999; margin-bottom: 5px;">○ ${crit}</li>`;
-                    });
-                    criteriaHtml += "</ul>";
-
-                    dash.innerHTML += `
-                        <div class="dashboard-card">
-                            <div class="scout-header">
-                                <h3>${scoutName}</h3>
-                                <span class="badge">${totalScore}/9 (${pct}%)</span>
-                            </div>
-                            <div class="progress-bg">
-                                <div class="progress-fill" style="width: ${pct}%;"></div>
-                            </div>
-                            <p style="font-size: 13px; color: #666; margin-top: 0; font-weight: 700;">Assessed at: ${records.map(r => r.activity).join(', ')}</p>
-                            ${criteriaHtml}
-                        </div>
-                    `;
-                }
-            } catch (error) { dash.innerHTML = "<p style='color: var(--danger); text-align:center;'>Failed to load data.</p>"; }
-        }
-
-        function exportDashboard() {
-            if (globalAssessments.length === 0) return showToast("No data to export. Refresh first.", "error");
-            
-            let csvContent = "Timestamp,Scout,Activity,Assessor," + criteria.map(c => `"${c}"`).join(",") + ",Total Ys,Comments\n";
-            
-            globalAssessments.forEach(a => {
-                const row = [
-                    `"${new Date(a.timestamp).toLocaleString()}"`,
-                    `"${a.scout}"`,
-                    `"${a.activity}"`,
-                    `"${a.assessor}"`,
-                    ...a.results.map(r => `"${r.score}"`),
-                    a.yCount,
-                    `"${(a.comments || "").replace(/"/g, '""')}"`
-                ];
-                csvContent += row.join(",") + "\n";
-            });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", "PL_Assessments_Export.csv");
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    </script>
-</body>
-</html>
+            const fi
