@@ -60,7 +60,7 @@
         .radio-group input[value="N"]:checked + label { background: #ffebee; border-color: var(--danger); color: var(--danger); }
         .radio-group input[value="NOB"]:checked + label { background: #e0e0e0; border-color: #999; color: #333; }
         
-        #reader { width: 100%; max-width: 400px; margin: 0 auto 15px auto; border-radius: 12px; overflow: hidden; box-shadow: var(--card-shadow); border: none; }
+        #reader { width: 100%; max-width: 400px; margin: 0 auto 15px auto; border-radius: 12px; overflow: hidden; box-shadow: var(--card-shadow); border: none; background: #eee; min-height: 100px; display: flex; align-items: center; justify-content: center; }
         
         .dashboard-card { background: white; padding: 20px; margin-bottom: 15px; border-radius: 12px; box-shadow: var(--card-shadow); border: 1px solid #eee; border-left: 5px solid var(--secondary); }
         .scout-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 15px; }
@@ -79,7 +79,7 @@
         .flex-row { display: flex; gap: 10px; margin-bottom: 10px; }
         .import-box { background: #f8f9fa; padding: 15px; border: 2px dashed #ddd; border-radius: 8px; margin-bottom: 15px; text-align: center; }
         
-        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 16px; position: fixed; z-index: 2000; left: 50%; transform: translateX(-50%); bottom: 90px; font-weight: 700; opacity: 0; transition: opacity 0.3s, bottom 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 16px; position: fixed; z-index: 2000; left: 50%; transform: translateX(-50%); bottom: 90px; font-weight: 700; opacity: 0; transition: opacity 0.3s, bottom 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.2); pointer-events: none; }
         #toast.show { visibility: visible; opacity: 1; bottom: 100px; }
         #toast.success { background-color: var(--success); }
         #toast.error { background-color: var(--danger); }
@@ -117,8 +117,8 @@
 
             <div class="form-group" style="background: white; padding: 15px; border-radius: 12px; box-shadow: var(--card-shadow);">
                 <label>Scan Scout QR Code (or select manually)</label>
-                <div id="reader"></div>
-                <select id="scoutSelect"><option value="">-- Manual Fallback: Select Scout --</option></select>
+                <div id="reader"><span style="color:#888; font-size:14px;">Camera Loading...</span></div>
+                <select id="scoutSelect" style="margin-top: 10px;"><option value="">-- Manual Fallback: Select Scout --</option></select>
                 <p id="scoutConfirm" style="color: var(--success); font-weight: 800; margin-top: 10px; text-align: center;"></p>
             </div>
 
@@ -210,8 +210,30 @@
             "Risks assessed and communicated"
         ];
 
-        let configuredScouts = JSON.parse(localStorage.getItem('pl_scouts')) || [];
-        let configuredActivities = JSON.parse(localStorage.getItem('pl_activities')) || [];
+        // Safely load memory
+        let configuredScouts = [];
+        let configuredActivities = [
+            "Film Star", "Twisted fire starter", "All tied up", "All popped", 
+            "Sticky Marshmallow", "Roasting time", "Trauma tower", "Replication", 
+            "Nuclear cleanup", "Newspaper towers", "Remote control shear legs", 
+            "Kim’s game", "Inter patrol challenge", "Flagpole teamwork challenge", 
+            "Spare one", "Spare two", "Spare three"
+        ];
+
+        try {
+            const rawScouts = localStorage.getItem('pl_scouts');
+            if (rawScouts && rawScouts !== "undefined") {
+                configuredScouts = JSON.parse(rawScouts) || [];
+            }
+        } catch(e) { console.warn("Scout memory reset."); }
+
+        try {
+            const rawAct = localStorage.getItem('pl_activities');
+            if (rawAct && rawAct !== "undefined") {
+                configuredActivities = JSON.parse(rawAct) || configuredActivities;
+            }
+        } catch(e) { console.warn("Activity memory reset."); }
+
         let html5QrcodeScanner = null;
         let globalAssessments = [];
         let editingAssessmentId = null;
@@ -224,17 +246,21 @@
             setTimeout(() => { toast.className = toast.className.replace("show " + type, ""); }, 3000);
         }
 
+        // Guarantees execution order on load
         window.onload = () => { 
-            buildCriteriaForm();
-            refreshDropdownsAndLists();
-            initScanner();
-            syncMasterData(); 
+            try { buildCriteriaForm(); } catch(e) {}
+            try { refreshDropdownsAndLists(); } catch(e) {}
+            try { initScanner(); } catch(e) {}
+            try { syncMasterData(); } catch(e) {}
         };
 
         function buildCriteriaForm() {
             const criteriaContainer = document.getElementById('criteriaContainer');
+            if (!criteriaContainer) return;
+            
+            let html = "";
             criteria.forEach((crit, index) => {
-                criteriaContainer.innerHTML += `
+                html += `
                     <div class="criteria-row">
                         <label class="crit-title">${crit}</label>
                         <div class="radio-group">
@@ -248,35 +274,52 @@
                     </div>
                 `;
             });
+            criteriaContainer.innerHTML = html;
         }
 
         function refreshDropdownsAndLists() {
             const scoutSelect = document.getElementById('scoutSelect');
             const activitySelect = document.getElementById('activitySelect');
             
-            scoutSelect.innerHTML = '<option value="">-- Manual Fallback: Select Scout --</option>';
-            configuredScouts.forEach(s => scoutSelect.innerHTML += `<option value="${s.name} (${s.patrol})">${s.name} (${s.patrol})</option>`);
+            if (scoutSelect) {
+                scoutSelect.innerHTML = '<option value="">-- Manual Fallback: Select Scout --</option>';
+                configuredScouts.forEach(s => {
+                    if(s && s.name) scoutSelect.innerHTML += `<option value="${s.name} (${s.patrol})">${s.name} (${s.patrol})</option>`;
+                });
+            }
 
-            activitySelect.innerHTML = '<option value="">-- Select Activity --</option>';
-            configuredActivities.forEach(act => activitySelect.innerHTML += `<option value="${act}">${act}</option>`);
+            if (activitySelect) {
+                activitySelect.innerHTML = '<option value="">-- Select Activity --</option>';
+                configuredActivities.forEach(act => {
+                    if(act) activitySelect.innerHTML += `<option value="${act}">${act}</option>`;
+                });
+            }
 
             const adminScoutList = document.getElementById('adminScoutList');
-            adminScoutList.innerHTML = '';
-            configuredScouts.forEach((s, index) => {
-                adminScoutList.innerHTML += `
-                    <li style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
-                        <span style="flex-grow: 1;">${s.name} - <strong style="color: var(--secondary);">${s.patrol}</strong></span>
-                        <div style="display: flex; gap: 8px;">
-                            <button style="background: #17a2b8; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 800; cursor: pointer;" onclick="editScout(${index})">Edit</button>
-                            <button class="delete-btn" style="padding: 6px 12px;" onclick="deleteScout(${index})">Delete</button>
-                        </div>
-                    </li>
-                `;
-            });
+            if (adminScoutList) {
+                adminScoutList.innerHTML = '';
+                configuredScouts.forEach((s, index) => {
+                    if(!s || !s.name) return;
+                    adminScoutList.innerHTML += `
+                        <li style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                            <span style="flex-grow: 1;">${s.name} - <strong style="color: var(--secondary);">${s.patrol}</strong></span>
+                            <div style="display: flex; gap: 8px;">
+                                <button style="background: #17a2b8; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 800; cursor: pointer;" onclick="editScout(${index})">Edit</button>
+                                <button class="delete-btn" style="padding: 6px 12px;" onclick="deleteScout(${index})">Delete</button>
+                            </div>
+                        </li>
+                    `;
+                });
+            }
 
             const adminActivityList = document.getElementById('adminActivityList');
-            adminActivityList.innerHTML = '';
-            configuredActivities.forEach((act, index) => adminActivityList.innerHTML += `<li>${act} <button class="delete-btn" onclick="deleteActivity(${index})">Delete</button></li>`);
+            if (adminActivityList) {
+                adminActivityList.innerHTML = '';
+                configuredActivities.forEach((act, index) => {
+                    if(!act) return;
+                    adminActivityList.innerHTML += `<li>${act} <button class="delete-btn" onclick="deleteActivity(${index})">Delete</button></li>`;
+                });
+            }
         }
 
         // ---------- CENTRAL SYNC LOGIC ---------- //
@@ -354,8 +397,6 @@
             submitBtn.style.background = "var(--secondary)";
             
             document.getElementById('scoutCancelBtn').style.display = "block";
-            
-            // Scroll up to the input fields
             window.scrollTo({ top: document.getElementById('newScoutName').offsetTop - 100, behavior: 'smooth' });
         }
 
@@ -469,6 +510,10 @@
 
         function initScanner() {
             try {
+                if (typeof Html5QrcodeScanner === 'undefined') {
+                    document.getElementById('reader').innerHTML = '<span style="color:#e30043; font-size:14px;">Scanner library failed to load (offline). Use manual fallback.</span>';
+                    return;
+                }
                 if (!html5QrcodeScanner) {
                     html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
                     html5QrcodeScanner.render((decodedText) => {
@@ -481,7 +526,9 @@
                         setTimeout(() => html5QrcodeScanner.resume(), 3000); 
                     }, () => {});
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { 
+                console.error("Scanner error:", e); 
+            }
         }
 
         // ---------- ASSESSMENTS ---------- //
