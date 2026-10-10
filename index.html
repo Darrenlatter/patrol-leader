@@ -587,3 +587,68 @@
                         <div style="display:flex; justify-content: space-between; align-items: center;">
                             <strong style="font-size:16px;">${a.scout}</strong>
                             <span style="font-size: 12px; color: #666;">${timeString}</span>
+                        </div>
+                        <p style="margin: 5px 0 10px 0; font-size: 14px; color: #444;">${a.activity} (Assessor: ${a.assessor})</p>
+                        ${a.id ? `
+                            <div style="display: flex; gap: 10px;">
+                                <button class="action-btn" style="padding: 8px; margin: 0; background: var(--secondary);" onclick="startEdit('${a.id}')">Edit</button>
+                                <button class="action-btn" style="padding: 8px; margin: 0; background: var(--danger);" onclick="deleteAssessment('${a.id}')">Delete</button>
+                            </div>
+                        ` : `<p style="font-size:11px; color:#999; margin:0;">Legacy record</p>`}
+                    </div>
+                `;
+            });
+        }
+
+        function renderDashboardHtml() {
+            const dash = document.getElementById('dashboardContainer');
+            if(globalAssessments.length === 0) { dash.innerHTML = "<p style='text-align:center;'>No assessments recorded yet.</p>"; return; }
+            dash.innerHTML = "";
+            const grouped = {};
+            globalAssessments.forEach(a => {
+                if(!grouped[a.scout]) grouped[a.scout] = [];
+                grouped[a.scout].push(a);
+            });
+
+            for (const [scoutName, records] of Object.entries(grouped)) {
+                let demonstratedCriteria = new Set();
+                records.forEach(rec => rec.results.forEach(res => { if(res.score === 'Y') demonstratedCriteria.add(res.criterion); }));
+                let totalScore = demonstratedCriteria.size;
+                let pct = Math.round((totalScore / 9) * 100);
+                
+                let criteriaHtml = "<ul style='padding-left: 20px; font-size: 14px; margin-bottom: 0;'>";
+                criteria.forEach(crit => {
+                    if(demonstratedCriteria.has(crit)) criteriaHtml += `<li style="color: var(--success); margin-bottom: 5px; font-weight: 700;">✓ ${crit}</li>`;
+                    else criteriaHtml += `<li style="color: #999; margin-bottom: 5px;">○ ${crit}</li>`;
+                });
+                criteriaHtml += "</ul>";
+
+                dash.innerHTML += `
+                    <div class="dashboard-card">
+                        <div class="scout-header"><h3>${scoutName}</h3><span class="badge">${totalScore}/9 (${pct}%)</span></div>
+                        <div class="progress-bg"><div class="progress-fill" style="width: ${pct}%;"></div></div>
+                        <p style="font-size: 13px; color: #666; margin-top: 0; font-weight: 700;">Assessed at: ${records.map(r => r.activity).join(', ')}</p>
+                        ${criteriaHtml}
+                    </div>
+                `;
+            }
+        }
+
+        function exportDashboard() {
+            if (globalAssessments.length === 0) return showToast("No data to export.", "error");
+            let csvContent = "Timestamp,Scout,Activity,Assessor," + criteria.map(c => `"${c}"`).join(",") + ",Total Ys,Comments\n";
+            globalAssessments.forEach(a => {
+                const row = [`"${new Date(a.timestamp).toLocaleString()}"`, `"${a.scout}"`, `"${a.activity}"`, `"${a.assessor}"`, ...a.results.map(r => `"${r.score}"`), a.yCount, `"${(a.comments || "").replace(/"/g, '""')}"`];
+                csvContent += row.join(",") + "\n";
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.setAttribute("href", URL.createObjectURL(blob));
+            link.setAttribute("download", "PL_Assessments_Export.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
