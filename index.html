@@ -112,7 +112,7 @@
         <div id="assess" class="tab-content active">
             <div id="editWarning" style="display:none; background: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; margin-bottom: 15px; font-weight: 800; text-align: center; border: 1px solid #ffeeba;">
                 Editing Existing Assessment <br>
-                <button onclick="cancelEdit()" style="margin-top: 10px; padding: 8px 15px; cursor:pointer; background: #856404; color: white; border: none; border-radius: 5px; font-weight: bold;">Cancel Edit</button>
+                <button onclick="cancelAssessmentEdit()" style="margin-top: 10px; padding: 8px 15px; cursor:pointer; background: #856404; color: white; border: none; border-radius: 5px; font-weight: bold;">Cancel Edit</button>
             </div>
 
             <div class="form-group" style="background: white; padding: 15px; border-radius: 12px; box-shadow: var(--card-shadow);">
@@ -164,11 +164,17 @@
                     <input type="file" id="scoutCsvUpload" accept=".csv" style="margin-bottom: 10px;">
                     <button class="action-btn" style="background: var(--secondary); padding: 10px; font-size: 14px;" onclick="importScoutsCSV()">Import CSV & Sync</button>
                 </div>
+                
                 <div class="flex-row" style="margin-top: 15px;">
                     <input type="text" id="newScoutName" placeholder="Scout Name">
                     <input type="text" id="newScoutPatrol" placeholder="Patrol">
                 </div>
-                <button class="action-btn" style="padding: 12px;" onclick="addScout()">Add Single Scout</button>
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <button id="scoutSubmitBtn" class="action-btn" style="padding: 12px; margin-bottom: 0;" onclick="submitScout()">Add Single Scout</button>
+                    <button id="scoutCancelBtn" class="action-btn" style="padding: 12px; background: #856404; display: none; margin-bottom: 0;" onclick="cancelScoutEdit()">Cancel</button>
+                </div>
+
                 <ul id="adminScoutList" class="list-group"></ul>
                 <button class="action-btn" style="background: var(--success); margin-top: 15px;" onclick="printQRCodes()">Print QR Code Badges</button>
             </div>
@@ -209,6 +215,7 @@
         let html5QrcodeScanner = null;
         let globalAssessments = [];
         let editingAssessmentId = null;
+        let editingScoutIndex = null;
 
         function showToast(message, type = "success") {
             const toast = document.getElementById("toast");
@@ -316,29 +323,52 @@
             }
         }
 
-        // ---------- MANAGE DATA ---------- //
+        // ---------- MANAGE SCOUTS ---------- //
 
-        function addScout() {
+        function submitScout() {
             const name = document.getElementById('newScoutName').value.trim();
             const patrol = document.getElementById('newScoutPatrol').value.trim();
             if(!name || !patrol) return showToast("Please enter both Name and Patrol.", "error");
-            configuredScouts.push({ name, patrol });
+            
+            if (editingScoutIndex !== null) {
+                configuredScouts[editingScoutIndex] = { name, patrol };
+                showToast("Scout Updated");
+            } else {
+                configuredScouts.push({ name, patrol });
+                showToast("Scout Added");
+            }
+            
             localStorage.setItem('pl_scouts', JSON.stringify(configuredScouts));
-            document.getElementById('newScoutName').value = "";
-            document.getElementById('newScoutPatrol').value = "";
+            cancelScoutEdit(); 
             refreshDropdownsAndLists();
             pushConfigToServer('scouts');
         }
         
         function editScout(index) {
-            const scout = configuredScouts[index];
-            const newPatrol = prompt(`Enter new patrol for ${scout.name}:`, scout.patrol);
-            if (newPatrol !== null && newPatrol.trim() !== "") {
-                configuredScouts[index].patrol = newPatrol.trim();
-                localStorage.setItem('pl_scouts', JSON.stringify(configuredScouts));
-                refreshDropdownsAndLists();
-                pushConfigToServer('scouts');
-            }
+            editingScoutIndex = index;
+            document.getElementById('newScoutName').value = configuredScouts[index].name;
+            document.getElementById('newScoutPatrol').value = configuredScouts[index].patrol;
+            
+            const submitBtn = document.getElementById('scoutSubmitBtn');
+            submitBtn.innerText = "Update Scout";
+            submitBtn.style.background = "var(--secondary)";
+            
+            document.getElementById('scoutCancelBtn').style.display = "block";
+            
+            // Scroll up to the input fields
+            window.scrollTo({ top: document.getElementById('newScoutName').offsetTop - 100, behavior: 'smooth' });
+        }
+
+        function cancelScoutEdit() {
+            editingScoutIndex = null;
+            document.getElementById('newScoutName').value = "";
+            document.getElementById('newScoutPatrol').value = "";
+            
+            const submitBtn = document.getElementById('scoutSubmitBtn');
+            submitBtn.innerText = "Add Single Scout";
+            submitBtn.style.background = "var(--primary)";
+            
+            document.getElementById('scoutCancelBtn').style.display = "none";
         }
 
         function deleteScout(index) {
@@ -347,6 +377,8 @@
             refreshDropdownsAndLists();
             pushConfigToServer('scouts');
         }
+
+        // ---------- MANAGE ACTIVITIES ---------- //
 
         function addActivity() {
             const act = document.getElementById('newActivityName').value.trim();
@@ -484,7 +516,7 @@
                     body: JSON.stringify(payload)
                 });
                 showToast(editingAssessmentId ? "Assessment Updated!" : "Assessment Saved!");
-                cancelEdit(); 
+                cancelAssessmentEdit(); 
                 syncMasterData(); 
             } catch (error) {
                 showToast("Failed to submit. Check connection.", "error");
@@ -529,7 +561,7 @@
             switchTab('assess');
         }
 
-        function cancelEdit() {
+        function cancelAssessmentEdit() {
             editingAssessmentId = null;
             document.getElementById('editWarning').style.display = 'none';
             document.querySelector('.submit-btn').innerText = "Submit Assessment";
@@ -555,68 +587,3 @@
                         <div style="display:flex; justify-content: space-between; align-items: center;">
                             <strong style="font-size:16px;">${a.scout}</strong>
                             <span style="font-size: 12px; color: #666;">${timeString}</span>
-                        </div>
-                        <p style="margin: 5px 0 10px 0; font-size: 14px; color: #444;">${a.activity} (Assessor: ${a.assessor})</p>
-                        ${a.id ? `
-                            <div style="display: flex; gap: 10px;">
-                                <button class="action-btn" style="padding: 8px; margin: 0; background: var(--secondary);" onclick="startEdit('${a.id}')">Edit</button>
-                                <button class="action-btn" style="padding: 8px; margin: 0; background: var(--danger);" onclick="deleteAssessment('${a.id}')">Delete</button>
-                            </div>
-                        ` : `<p style="font-size:11px; color:#999; margin:0;">Legacy record</p>`}
-                    </div>
-                `;
-            });
-        }
-
-        function renderDashboardHtml() {
-            const dash = document.getElementById('dashboardContainer');
-            if(globalAssessments.length === 0) { dash.innerHTML = "<p style='text-align:center;'>No assessments recorded yet.</p>"; return; }
-            dash.innerHTML = "";
-            const grouped = {};
-            globalAssessments.forEach(a => {
-                if(!grouped[a.scout]) grouped[a.scout] = [];
-                grouped[a.scout].push(a);
-            });
-
-            for (const [scoutName, records] of Object.entries(grouped)) {
-                let demonstratedCriteria = new Set();
-                records.forEach(rec => rec.results.forEach(res => { if(res.score === 'Y') demonstratedCriteria.add(res.criterion); }));
-                let totalScore = demonstratedCriteria.size;
-                let pct = Math.round((totalScore / 9) * 100);
-                
-                let criteriaHtml = "<ul style='padding-left: 20px; font-size: 14px; margin-bottom: 0;'>";
-                criteria.forEach(crit => {
-                    if(demonstratedCriteria.has(crit)) criteriaHtml += `<li style="color: var(--success); margin-bottom: 5px; font-weight: 700;">✓ ${crit}</li>`;
-                    else criteriaHtml += `<li style="color: #999; margin-bottom: 5px;">○ ${crit}</li>`;
-                });
-                criteriaHtml += "</ul>";
-
-                dash.innerHTML += `
-                    <div class="dashboard-card">
-                        <div class="scout-header"><h3>${scoutName}</h3><span class="badge">${totalScore}/9 (${pct}%)</span></div>
-                        <div class="progress-bg"><div class="progress-fill" style="width: ${pct}%;"></div></div>
-                        <p style="font-size: 13px; color: #666; margin-top: 0; font-weight: 700;">Assessed at: ${records.map(r => r.activity).join(', ')}</p>
-                        ${criteriaHtml}
-                    </div>
-                `;
-            }
-        }
-
-        function exportDashboard() {
-            if (globalAssessments.length === 0) return showToast("No data to export.", "error");
-            let csvContent = "Timestamp,Scout,Activity,Assessor," + criteria.map(c => `"${c}"`).join(",") + ",Total Ys,Comments\n";
-            globalAssessments.forEach(a => {
-                const row = [`"${new Date(a.timestamp).toLocaleString()}"`, `"${a.scout}"`, `"${a.activity}"`, `"${a.assessor}"`, ...a.results.map(r => `"${r.score}"`), a.yCount, `"${(a.comments || "").replace(/"/g, '""')}"`];
-                csvContent += row.join(",") + "\n";
-            });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.setAttribute("href", URL.createObjectURL(blob));
-            link.setAttribute("download", "PL_Assessments_Export.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    </script>
-</body>
-</html>
