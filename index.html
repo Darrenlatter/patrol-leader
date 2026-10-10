@@ -16,7 +16,22 @@
         }
         
         body { font-family: 'Nunito Sans', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0 0 80px 0; -webkit-tap-highlight-color: transparent; }
-        header { background-color: var(--primary); color: white; padding: 1.2rem; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        
+        header { 
+            background-color: var(--primary); color: white; padding: 1.2rem; 
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: relative;
+        }
+        header h2 { margin: 0; font-weight: 800; font-size: 20px; }
+        
+        .header-btn {
+            position: absolute; right: 15px; background: transparent; border: none; 
+            color: white; cursor: pointer; padding: 8px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center;
+        }
+        .header-btn svg { width: 24px; height: 24px; fill: currentColor; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .spinning { animation: spin 1s linear infinite; }
         
         nav { position: fixed; bottom: 0; left: 0; width: 100%; display: flex; justify-content: space-around; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; padding: 5px 0 15px 0; }
         nav button { flex: 1; background: transparent; border: none; color: #888; cursor: pointer; font-family: 'Nunito Sans', sans-serif; font-weight: 700; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; transition: color 0.2s; }
@@ -77,7 +92,10 @@
 <body>
 
     <header>
-        <h2 style="margin: 0; font-weight: 800;">PL Training App</h2>
+        <h2>PL Training App</h2>
+        <button class="header-btn" onclick="syncMasterData()" aria-label="Resync Data">
+            <svg id="syncIcon" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+        </button>
     </header>
 
     <nav>
@@ -126,16 +144,12 @@
 
         <!-- 2. HISTORY TAB -->
         <div id="history" class="tab-content">
-            <div style="margin-bottom: 20px;">
-                <button class="action-btn" style="background: #333;" onclick="syncMasterData()">Refresh History & Lists</button>
-            </div>
             <div id="historyContainer"><p style="text-align:center; color: #666; font-weight: 700;">Loading...</p></div>
         </div>
 
         <!-- 3. DASHBOARD TAB -->
         <div id="dashboard" class="tab-content">
             <div style="margin-bottom: 20px; display: flex; gap: 10px;">
-                <button class="action-btn" style="background: #333; margin-bottom: 0;" onclick="syncMasterData()">Refresh Live Data</button>
                 <button class="action-btn" style="background: var(--secondary); margin-bottom: 0;" onclick="exportDashboard()">Export to CSV</button>
             </div>
             <div id="dashboardContainer"><p style="text-align:center; color: #666; font-weight: 700;">Loading...</p></div>
@@ -143,8 +157,6 @@
 
         <!-- 4. MANAGE & QR TAB -->
         <div id="admin" class="tab-content">
-            <button class="action-btn" style="background: #333; margin-bottom: 20px;" onclick="syncMasterData()">Force Sync Config from Server</button>
-            
             <div class="admin-section">
                 <h3>Manage Scouts</h3>
                 <div class="import-box">
@@ -209,7 +221,7 @@
             buildCriteriaForm();
             refreshDropdownsAndLists();
             initScanner();
-            syncMasterData(); // Pull master config immediately on load
+            syncMasterData(); 
         };
 
         function buildCriteriaForm() {
@@ -263,6 +275,9 @@
         // ---------- CENTRAL SYNC LOGIC ---------- //
 
         async function syncMasterData() {
+            const syncIcon = document.getElementById('syncIcon');
+            if (syncIcon) syncIcon.classList.add('spinning');
+            
             showToast("Syncing with Server...", "sync");
             try {
                 const response = await fetch(WEB_APP_URL);
@@ -270,7 +285,6 @@
                 
                 globalAssessments = data.assessments || [];
                 
-                // Only overwrite local lists if the server actually has data (prevents wiping local if sheet is empty)
                 if(data.scouts && data.scouts.length > 0) configuredScouts = data.scouts;
                 if(data.activities && data.activities.length > 0) configuredActivities = data.activities;
                 
@@ -283,6 +297,8 @@
                 showToast("Sync Complete!");
             } catch (error) {
                 showToast("Sync failed. Using local data.", "error");
+            } finally {
+                if (syncIcon) syncIcon.classList.remove('spinning');
             }
         }
 
@@ -469,7 +485,7 @@
                 });
                 showToast(editingAssessmentId ? "Assessment Updated!" : "Assessment Saved!");
                 cancelEdit(); 
-                syncMasterData(); // Fetch the new dashboard stats implicitly
+                syncMasterData(); 
             } catch (error) {
                 showToast("Failed to submit. Check connection.", "error");
             } finally {
