@@ -4,70 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PL Training Assessment</title>
-    
-    <!-- Official UK Scouts Font -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700;800&display=swap" rel="stylesheet">
-    
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     
     <style>
         :root { 
-            --primary: #7413dc; /* Scout Purple */
-            --secondary: #00a794; /* Scout Teal */
-            --bg: #f4f4f9; 
-            --text: #333; 
-            --danger: #e30043;
-            --success: #28a745;
+            --primary: #7413dc; --secondary: #00a794; --bg: #f4f4f9; 
+            --text: #333; --danger: #e30043; --success: #28a745;
             --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
         
-        body { 
-            font-family: 'Nunito Sans', sans-serif; 
-            background-color: var(--bg); 
-            color: var(--text); 
-            margin: 0; 
-            padding: 0 0 80px 0; /* Space for bottom nav */
-            -webkit-tap-highlight-color: transparent;
-        }
+        body { font-family: 'Nunito Sans', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0 0 80px 0; -webkit-tap-highlight-color: transparent; }
+        header { background-color: var(--primary); color: white; padding: 1.2rem; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         
-        header { 
-            background-color: var(--primary); 
-            color: white; 
-            padding: 1.2rem; 
-            text-align: center; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        /* Mobile-App Bottom Navigation */
-        nav { 
-            position: fixed; 
-            bottom: 0; 
-            left: 0; 
-            width: 100%; 
-            display: flex; 
-            justify-content: space-around; 
-            background: white; 
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.05); 
-            z-index: 1000;
-            padding: 5px 0 15px 0; /* Extra padding for modern phones */
-        }
-        nav button { 
-            flex: 1; 
-            background: transparent; 
-            border: none; 
-            color: #888; 
-            cursor: pointer; 
-            font-family: 'Nunito Sans', sans-serif;
-            font-weight: 700; 
-            font-size: 11px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            gap: 4px;
-            padding: 8px 0;
-            transition: color 0.2s;
-        }
+        nav { position: fixed; bottom: 0; left: 0; width: 100%; display: flex; justify-content: space-around; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; padding: 5px 0 15px 0; }
+        nav button { flex: 1; background: transparent; border: none; color: #888; cursor: pointer; font-family: 'Nunito Sans', sans-serif; font-weight: 700; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; transition: color 0.2s; }
         nav button svg { fill: currentColor; width: 24px; height: 24px; }
         nav button.active { color: var(--primary); }
         
@@ -76,49 +28,25 @@
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Form & Cards */
         .form-group { margin-bottom: 20px; }
         label { display: block; font-weight: 800; margin-bottom: 8px; font-size: 14px; color: #555; }
-        select, input[type="text"], textarea, input[type="file"] { 
-            width: 100%; padding: 12px; border: 1px solid #ddd; 
-            border-radius: 8px; box-sizing: border-box; font-family: 'Nunito Sans', sans-serif; 
-            font-size: 16px; background: white; transition: border-color 0.2s;
-        }
+        select, input[type="text"], textarea, input[type="file"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: 'Nunito Sans', sans-serif; font-size: 16px; background: white; transition: border-color 0.2s; }
         select:focus, input[type="text"]:focus, textarea:focus { outline: none; border-color: var(--primary); }
         
-        button.action-btn { 
-            width: 100%; padding: 15px; background: var(--primary); 
-            color: white; border: none; border-radius: 8px; 
-            font-size: 16px; font-weight: 800; cursor: pointer; 
-            margin-bottom: 10px; font-family: 'Nunito Sans', sans-serif;
-            box-shadow: 0 4px 6px rgba(116, 19, 220, 0.2);
-            transition: transform 0.1s, box-shadow 0.1s;
-        }
+        button.action-btn { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 800; cursor: pointer; margin-bottom: 10px; font-family: 'Nunito Sans', sans-serif; box-shadow: 0 4px 6px rgba(116, 19, 220, 0.2); transition: transform 0.1s, box-shadow 0.1s; }
         button.action-btn:active { transform: translateY(2px); box-shadow: 0 2px 4px rgba(116, 19, 220, 0.2); }
         
-        /* Touch-Friendly Radio Buttons */
         .criteria-row { background: white; padding: 15px; margin-bottom: 12px; border-radius: 12px; box-shadow: var(--card-shadow); border: 1px solid #f0f0f0; }
         .criteria-row label.crit-title { font-size: 15px; color: #222; margin-bottom: 12px; display: block; line-height: 1.3; }
         .radio-group { display: flex; gap: 8px; }
-        
-        /* Hide default radios */
         .radio-group input[type="radio"] { display: none; }
-        
-        /* Style the labels as large tap targets */
-        .radio-group label.tap-target {
-            flex: 1; text-align: center; padding: 12px 5px; border-radius: 8px; 
-            background: #f4f4f4; border: 2px solid transparent; 
-            font-weight: 700; font-size: 14px; color: #666; 
-            cursor: pointer; transition: all 0.2s;
-        }
-        /* Active states */
+        .radio-group label.tap-target { flex: 1; text-align: center; padding: 12px 5px; border-radius: 8px; background: #f4f4f4; border: 2px solid transparent; font-weight: 700; font-size: 14px; color: #666; cursor: pointer; transition: all 0.2s; }
         .radio-group input[value="Y"]:checked + label { background: #e8f5e9; border-color: var(--success); color: var(--success); }
         .radio-group input[value="N"]:checked + label { background: #ffebee; border-color: var(--danger); color: var(--danger); }
         .radio-group input[value="NOB"]:checked + label { background: #e0e0e0; border-color: #999; color: #333; }
         
         #reader { width: 100%; max-width: 400px; margin: 0 auto 15px auto; border-radius: 12px; overflow: hidden; box-shadow: var(--card-shadow); border: none; }
         
-        /* Dashboard Cards & Progress Bar */
         .dashboard-card { background: white; padding: 20px; margin-bottom: 15px; border-radius: 12px; box-shadow: var(--card-shadow); border: 1px solid #eee; border-left: 5px solid var(--secondary); }
         .scout-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 15px; }
         .scout-header h3 { font-size: 18px; margin: 0; color: #111; }
@@ -136,28 +64,14 @@
         .flex-row { display: flex; gap: 10px; margin-bottom: 10px; }
         .import-box { background: #f8f9fa; padding: 15px; border: 2px dashed #ddd; border-radius: 8px; margin-bottom: 15px; text-align: center; }
         
-        /* Toast Notifications */
-        #toast {
-            visibility: hidden; min-width: 250px; background-color: #333; color: #fff;
-            text-align: center; border-radius: 30px; padding: 16px; position: fixed;
-            z-index: 2000; left: 50%; transform: translateX(-50%); bottom: 90px; 
-            font-weight: 700; opacity: 0; transition: opacity 0.3s, bottom 0.3s;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
+        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 16px; position: fixed; z-index: 2000; left: 50%; transform: translateX(-50%); bottom: 90px; font-weight: 700; opacity: 0; transition: opacity 0.3s, bottom 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         #toast.show { visibility: visible; opacity: 1; bottom: 100px; }
         #toast.success { background-color: var(--success); }
         #toast.error { background-color: var(--danger); }
+        #toast.sync { background-color: #17a2b8; }
         
         #printArea { display: none; }
-        @media print {
-            body * { visibility: hidden; }
-            #printArea, #printArea * { visibility: visible; }
-            #printArea { display: flex; flex-wrap: wrap; justify-content: center; position: absolute; left: 0; top: 0; width: 100%; gap: 20px; }
-            .qr-card { text-align: center; border: 1px solid #000; padding: 15px; width: 180px; page-break-inside: avoid; margin-bottom: 20px; font-family: sans-serif; }
-            .qr-card img { width: 150px; height: 150px; }
-            .qr-card h4 { margin: 10px 0 5px 0; font-size: 18px; }
-            .qr-card p { margin: 0; font-size: 14px; color: #555; }
-        }
+        @media print { body * { visibility: hidden; } #printArea, #printArea * { visibility: visible; } #printArea { display: flex; flex-wrap: wrap; justify-content: center; position: absolute; left: 0; top: 0; width: 100%; gap: 20px; } .qr-card { text-align: center; border: 1px solid #000; padding: 15px; width: 180px; page-break-inside: avoid; margin-bottom: 20px; font-family: sans-serif; } .qr-card img { width: 150px; height: 150px; } .qr-card h4 { margin: 10px 0 5px 0; font-size: 18px; } .qr-card p { margin: 0; font-size: 14px; color: #555; } }
     </style>
 </head>
 <body>
@@ -167,29 +81,15 @@
     </header>
 
     <nav>
-        <button id="nav-assess" class="active" onclick="switchTab('assess')">
-            <svg viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-            Assess
-        </button>
-        <button id="nav-history" onclick="switchTab('history')">
-            <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/><path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
-            History
-        </button>
-        <button id="nav-dash" onclick="switchTab('dashboard')">
-            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
-            Dashboard
-        </button>
-        <button id="nav-admin" onclick="switchTab('admin')">
-            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
-            Manage
-        </button>
+        <button id="nav-assess" class="active" onclick="switchTab('assess')"><svg viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>Assess</button>
+        <button id="nav-history" onclick="switchTab('history')"><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/><path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>History</button>
+        <button id="nav-dash" onclick="switchTab('dashboard')"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>Dashboard</button>
+        <button id="nav-admin" onclick="switchTab('admin')"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>Manage</button>
     </nav>
 
-    <!-- Custom Toast Notification -->
     <div id="toast">Message here</div>
 
     <div class="container">
-        
         <!-- 1. ASSESS TAB -->
         <div id="assess" class="tab-content active">
             <div id="editWarning" style="display:none; background: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; margin-bottom: 15px; font-weight: 800; text-align: center; border: 1px solid #ffeeba;">
@@ -200,9 +100,7 @@
             <div class="form-group" style="background: white; padding: 15px; border-radius: 12px; box-shadow: var(--card-shadow);">
                 <label>Scan Scout QR Code (or select manually)</label>
                 <div id="reader"></div>
-                <select id="scoutSelect">
-                    <option value="">-- Manual Fallback: Select Scout --</option>
-                </select>
+                <select id="scoutSelect"><option value="">-- Manual Fallback: Select Scout --</option></select>
                 <p id="scoutConfirm" style="color: var(--success); font-weight: 800; margin-top: 10px; text-align: center;"></p>
             </div>
 
@@ -213,9 +111,7 @@
 
             <div class="form-group">
                 <label>Activity / Base</label>
-                <select id="activitySelect">
-                    <option value="">-- Select Activity --</option>
-                </select>
+                <select id="activitySelect"><option value="">-- Select Activity --</option></select>
             </div>
 
             <div id="criteriaContainer"></div>
@@ -231,35 +127,31 @@
         <!-- 2. HISTORY TAB -->
         <div id="history" class="tab-content">
             <div style="margin-bottom: 20px;">
-                <button class="action-btn" style="background: #333;" onclick="loadHistory()">Refresh History</button>
+                <button class="action-btn" style="background: #333;" onclick="syncMasterData()">Refresh History & Lists</button>
             </div>
-            <div id="historyContainer">
-                <p style="text-align:center; color: #666; font-weight: 700;">Click "Refresh History" to load past submissions.</p>
-            </div>
+            <div id="historyContainer"><p style="text-align:center; color: #666; font-weight: 700;">Loading...</p></div>
         </div>
 
         <!-- 3. DASHBOARD TAB -->
         <div id="dashboard" class="tab-content">
             <div style="margin-bottom: 20px; display: flex; gap: 10px;">
-                <button class="action-btn" style="background: #333; margin-bottom: 0;" onclick="renderDashboard()">Refresh Live Data</button>
+                <button class="action-btn" style="background: #333; margin-bottom: 0;" onclick="syncMasterData()">Refresh Live Data</button>
                 <button class="action-btn" style="background: var(--secondary); margin-bottom: 0;" onclick="exportDashboard()">Export to CSV</button>
             </div>
-            <div id="dashboardContainer">
-                <p style="text-align:center; color: #666; font-weight: 700;">Click "Refresh Live Data" to load Scout progress.</p>
-            </div>
+            <div id="dashboardContainer"><p style="text-align:center; color: #666; font-weight: 700;">Loading...</p></div>
         </div>
 
         <!-- 4. MANAGE & QR TAB -->
         <div id="admin" class="tab-content">
+            <button class="action-btn" style="background: #333; margin-bottom: 20px;" onclick="syncMasterData()">Force Sync Config from Server</button>
+            
             <div class="admin-section">
                 <h3>Manage Scouts</h3>
-                
                 <div class="import-box">
                     <label style="font-size: 14px; margin-bottom: 10px;">Bulk Import Scouts (CSV: Name, Patrol)</label>
                     <input type="file" id="scoutCsvUpload" accept=".csv" style="margin-bottom: 10px;">
-                    <button class="action-btn" style="background: var(--secondary); padding: 10px; font-size: 14px;" onclick="importScoutsCSV()">Import CSV</button>
+                    <button class="action-btn" style="background: var(--secondary); padding: 10px; font-size: 14px;" onclick="importScoutsCSV()">Import CSV & Sync</button>
                 </div>
-
                 <div class="flex-row" style="margin-top: 15px;">
                     <input type="text" id="newScoutName" placeholder="Scout Name">
                     <input type="text" id="newScoutPatrol" placeholder="Patrol">
@@ -271,13 +163,11 @@
 
             <div class="admin-section">
                 <h3>Manage Activities / Bases</h3>
-                
                 <div class="import-box">
                     <label style="font-size: 14px; margin-bottom: 10px;">Bulk Import Activities (CSV: Activity Name)</label>
                     <input type="file" id="activityCsvUpload" accept=".csv" style="margin-bottom: 10px;">
-                    <button class="action-btn" style="background: var(--secondary); padding: 10px; font-size: 14px;" onclick="importActivitiesCSV()">Import CSV</button>
+                    <button class="action-btn" style="background: var(--secondary); padding: 10px; font-size: 14px;" onclick="importActivitiesCSV()">Import CSV & Sync</button>
                 </div>
-
                 <div class="flex-row" style="margin-top: 15px;">
                     <input type="text" id="newActivityName" placeholder="Activity Name">
                 </div>
@@ -288,7 +178,6 @@
 
     </div>
 
-    <!-- Hidden area exclusively for printing QR codes -->
     <div id="printArea"></div>
 
     <script>
@@ -296,31 +185,19 @@
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbziOAd3VLWhzGuzm9pWi5kz9AMgJhBXU0v5HjPOVdOYTHxniWF16W0QKC5ZzpBeQ5BLLg/exec"; 
         
         const criteria = [
-            "PL took charge of the situation?",
-            "Clear instructions to all patrol members?",
-            "All patrol members clear about what they should be doing?",
-            "Tasks delegated fairly?",
-            "Checks progress of all patrol members & encourages them?",
-            "Sorts out any problems the patrol may have?",
-            "Everyone is taking an active part?",
-            "Views of other patrol members taken into account?",
+            "PL took charge of the situation?", "Clear instructions to all patrol members?",
+            "All patrol members clear about what they should be doing?", "Tasks delegated fairly?",
+            "Checks progress of all patrol members & encourages them?", "Sorts out any problems the patrol may have?",
+            "Everyone is taking an active part?", "Views of other patrol members taken into account?",
             "Risks assessed and communicated"
         ];
 
         let configuredScouts = JSON.parse(localStorage.getItem('pl_scouts')) || [];
-        let configuredActivities = JSON.parse(localStorage.getItem('pl_activities')) || [
-            "Film Star", "Twisted fire starter", "All tied up", "All popped", 
-            "Sticky Marshmallow", "Roasting time", "Trauma tower", "Replication", 
-            "Nuclear cleanup", "Newspaper towers", "Remote control shear legs", 
-            "Kim’s game", "Inter patrol challenge", "Flagpole teamwork challenge", 
-            "Spare one", "Spare two", "Spare three"
-        ];
-
+        let configuredActivities = JSON.parse(localStorage.getItem('pl_activities')) || [];
         let html5QrcodeScanner = null;
         let globalAssessments = [];
         let editingAssessmentId = null;
 
-        // Custom Toast Function
         function showToast(message, type = "success") {
             const toast = document.getElementById("toast");
             toast.innerText = message;
@@ -331,7 +208,8 @@
         window.onload = () => { 
             buildCriteriaForm();
             refreshDropdownsAndLists();
-            initScanner(); 
+            initScanner();
+            syncMasterData(); // Pull master config immediately on load
         };
 
         function buildCriteriaForm() {
@@ -343,10 +221,8 @@
                         <div class="radio-group">
                             <input type="radio" id="crit_${index}_y" name="crit_${index}" value="Y">
                             <label class="tap-target" for="crit_${index}_y">Yes</label>
-                            
                             <input type="radio" id="crit_${index}_n" name="crit_${index}" value="N">
                             <label class="tap-target" for="crit_${index}_n">No</label>
-                            
                             <input type="radio" id="crit_${index}_nob" name="crit_${index}" value="NOB" checked>
                             <label class="tap-target" for="crit_${index}_nob">N/A</label>
                         </div>
@@ -367,69 +243,61 @@
 
             const adminScoutList = document.getElementById('adminScoutList');
             adminScoutList.innerHTML = '';
-            configuredScouts.forEach((s, index) => adminScoutList.innerHTML += `<li>${s.name} - ${s.patrol} <button class="delete-btn" onclick="deleteScout(${index})">Delete</button></li>`);
+            configuredScouts.forEach((s, index) => {
+                adminScoutList.innerHTML += `
+                    <li style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                        <span style="flex-grow: 1;">${s.name} - <strong style="color: var(--secondary);">${s.patrol}</strong></span>
+                        <div style="display: flex; gap: 8px;">
+                            <button style="background: #17a2b8; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 800; cursor: pointer;" onclick="editScout(${index})">Edit</button>
+                            <button class="delete-btn" style="padding: 6px 12px;" onclick="deleteScout(${index})">Delete</button>
+                        </div>
+                    </li>
+                `;
+            });
 
             const adminActivityList = document.getElementById('adminActivityList');
             adminActivityList.innerHTML = '';
             configuredActivities.forEach((act, index) => adminActivityList.innerHTML += `<li>${act} <button class="delete-btn" onclick="deleteActivity(${index})">Delete</button></li>`);
         }
 
-        // ---------- IMPORT DATA (CSV) ---------- //
+        // ---------- CENTRAL SYNC LOGIC ---------- //
 
-        function importScoutsCSV() {
-            const file = document.getElementById('scoutCsvUpload').files[0];
-            if(!file) return showToast("Please select a CSV file first.", "error");
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const text = e.target.result;
-                const lines = text.split('\n');
-                let count = 0;
+        async function syncMasterData() {
+            showToast("Syncing with Server...", "sync");
+            try {
+                const response = await fetch(WEB_APP_URL);
+                const data = await response.json();
                 
-                lines.forEach(line => {
-                    const parts = line.split(',');
-                    if(parts.length >= 2) {
-                        const name = parts[0].trim();
-                        const patrol = parts[1].trim();
-                        if(name && patrol && name.toLowerCase() !== 'name' && name.toLowerCase() !== 'scout') { 
-                            configuredScouts.push({ name, patrol });
-                            count++;
-                        }
-                    }
-                });
+                globalAssessments = data.assessments || [];
+                
+                // Only overwrite local lists if the server actually has data (prevents wiping local if sheet is empty)
+                if(data.scouts && data.scouts.length > 0) configuredScouts = data.scouts;
+                if(data.activities && data.activities.length > 0) configuredActivities = data.activities;
                 
                 localStorage.setItem('pl_scouts', JSON.stringify(configuredScouts));
+                localStorage.setItem('pl_activities', JSON.stringify(configuredActivities));
+                
                 refreshDropdownsAndLists();
-                document.getElementById('scoutCsvUpload').value = "";
-                showToast(`Successfully imported ${count} Scouts!`);
-            };
-            reader.readAsText(file);
+                renderDashboardHtml();
+                renderHistoryHtml();
+                showToast("Sync Complete!");
+            } catch (error) {
+                showToast("Sync failed. Using local data.", "error");
+            }
         }
 
-        function importActivitiesCSV() {
-            const file = document.getElementById('activityCsvUpload').files[0];
-            if(!file) return showToast("Please select a CSV file first.", "error");
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const text = e.target.result;
-                const lines = text.split('\n');
-                let count = 0;
-                
-                lines.forEach(line => {
-                    const act = line.trim().replace(/,/g, ''); 
-                    if(act && act.toLowerCase() !== 'activity' && act.toLowerCase() !== 'base') {
-                        configuredActivities.push(act);
-                        count++;
-                    }
+        async function pushConfigToServer(type) {
+            const action = type === 'scouts' ? 'sync_scouts' : 'sync_activities';
+            const data = type === 'scouts' ? configuredScouts : configuredActivities;
+            try {
+                await fetch(WEB_APP_URL, {
+                    method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify({ action: action, data: data })
                 });
-                
-                localStorage.setItem('pl_activities', JSON.stringify(configuredActivities));
-                refreshDropdownsAndLists();
-                document.getElementById('activityCsvUpload').value = "";
-                showToast(`Successfully imported ${count} Activities!`);
-            };
-            reader.readAsText(file);
+                showToast("Saved & Synced Cloud");
+            } catch (e) {
+                showToast("Saved Locally (Cloud sync failed)", "error");
+            }
         }
 
         // ---------- MANAGE DATA ---------- //
@@ -443,13 +311,25 @@
             document.getElementById('newScoutName').value = "";
             document.getElementById('newScoutPatrol').value = "";
             refreshDropdownsAndLists();
-            showToast("Scout Added");
+            pushConfigToServer('scouts');
+        }
+        
+        function editScout(index) {
+            const scout = configuredScouts[index];
+            const newPatrol = prompt(`Enter new patrol for ${scout.name}:`, scout.patrol);
+            if (newPatrol !== null && newPatrol.trim() !== "") {
+                configuredScouts[index].patrol = newPatrol.trim();
+                localStorage.setItem('pl_scouts', JSON.stringify(configuredScouts));
+                refreshDropdownsAndLists();
+                pushConfigToServer('scouts');
+            }
         }
 
         function deleteScout(index) {
             configuredScouts.splice(index, 1);
             localStorage.setItem('pl_scouts', JSON.stringify(configuredScouts));
             refreshDropdownsAndLists();
+            pushConfigToServer('scouts');
         }
 
         function addActivity() {
@@ -459,29 +339,70 @@
             localStorage.setItem('pl_activities', JSON.stringify(configuredActivities));
             document.getElementById('newActivityName').value = "";
             refreshDropdownsAndLists();
-            showToast("Activity Added");
+            pushConfigToServer('activities');
         }
 
         function deleteActivity(index) {
             configuredActivities.splice(index, 1);
             localStorage.setItem('pl_activities', JSON.stringify(configuredActivities));
             refreshDropdownsAndLists();
+            pushConfigToServer('activities');
         }
+
+        function importScoutsCSV() {
+            const file = document.getElementById('scoutCsvUpload').files[0];
+            if(!file) return showToast("Select CSV first.", "error");
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const lines = e.target.result.split('\n');
+                lines.forEach(line => {
+                    const parts = line.split(',');
+                    if(parts.length >= 2) {
+                        const name = parts[0].trim(), patrol = parts[1].trim();
+                        if(name && patrol && name.toLowerCase() !== 'name' && name.toLowerCase() !== 'scout') { 
+                            configuredScouts.push({ name, patrol });
+                        }
+                    }
+                });
+                localStorage.setItem('pl_scouts', JSON.stringify(configuredScouts));
+                refreshDropdownsAndLists();
+                document.getElementById('scoutCsvUpload').value = "";
+                pushConfigToServer('scouts');
+            };
+            reader.readAsText(file);
+        }
+
+        function importActivitiesCSV() {
+            const file = document.getElementById('activityCsvUpload').files[0];
+            if(!file) return showToast("Select CSV first.", "error");
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const lines = e.target.result.split('\n');
+                lines.forEach(line => {
+                    const act = line.trim().replace(/,/g, ''); 
+                    if(act && act.toLowerCase() !== 'activity' && act.toLowerCase() !== 'base') {
+                        configuredActivities.push(act);
+                    }
+                });
+                localStorage.setItem('pl_activities', JSON.stringify(configuredActivities));
+                refreshDropdownsAndLists();
+                document.getElementById('activityCsvUpload').value = "";
+                pushConfigToServer('activities');
+            };
+            reader.readAsText(file);
+        }
+
+        // ---------- UI & PRINTING ---------- //
 
         function printQRCodes() {
             if(configuredScouts.length === 0) return showToast("Add some Scouts first.", "error");
             const printArea = document.getElementById('printArea');
             printArea.innerHTML = '';
-
             configuredScouts.forEach(scout => {
                 const card = document.createElement('div');
                 card.className = 'qr-card';
                 const qr = new QRious({ value: `${scout.name} (${scout.patrol})`, size: 150 });
-                card.innerHTML = `
-                    <img src="${qr.toDataURL()}" alt="QR Code">
-                    <h4>${scout.name}</h4>
-                    <p style="margin: 0; font-size: 14px; color: #555;">${scout.patrol}</p>
-                `;
+                card.innerHTML = `<img src="${qr.toDataURL()}"><h4>${scout.name}</h4><p style="margin: 0; font-size: 14px; color: #555;">${scout.patrol}</p>`;
                 printArea.appendChild(card);
             });
             setTimeout(() => { window.print(); }, 300);
@@ -493,8 +414,8 @@
             document.getElementById(tabId).classList.add('active');
             
             if (tabId === 'assess') document.getElementById('nav-assess').classList.add('active');
-            else if (tabId === 'history') { document.getElementById('nav-history').classList.add('active'); loadHistory(); }
-            else if (tabId === 'dashboard') { document.getElementById('nav-dash').classList.add('active'); renderDashboard(); }
+            else if (tabId === 'history') { document.getElementById('nav-history').classList.add('active'); renderHistoryHtml(); }
+            else if (tabId === 'dashboard') { document.getElementById('nav-dash').classList.add('active'); renderDashboardHtml(); }
             else if (tabId === 'admin') document.getElementById('nav-admin').classList.add('active');
         }
 
@@ -515,7 +436,7 @@
             } catch (e) { console.error(e); }
         }
 
-        // ---------- EDIT & DELETE LOGIC ---------- //
+        // ---------- ASSESSMENTS ---------- //
 
         async function submitAssessment() {
             const scout = document.getElementById('scoutSelect').value;
@@ -535,10 +456,9 @@
 
             const recordId = editingAssessmentId || new Date().getTime().toString();
             const record = { id: recordId, scout, activity, assessor, results, yCount, comments };
-            
             const payload = { action: editingAssessmentId ? "edit" : "add", record: record };
-
             const submitBtn = document.querySelector('.submit-btn');
+            
             submitBtn.innerText = "Submitting...";
             submitBtn.disabled = true;
 
@@ -547,9 +467,9 @@
                     method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" },
                     body: JSON.stringify(payload)
                 });
-                
                 showToast(editingAssessmentId ? "Assessment Updated!" : "Assessment Saved!");
                 cancelEdit(); 
+                syncMasterData(); // Fetch the new dashboard stats implicitly
             } catch (error) {
                 showToast("Failed to submit. Check connection.", "error");
             } finally {
@@ -558,40 +478,16 @@
             }
         }
 
-        async function loadHistory() {
-            const hist = document.getElementById('historyContainer');
-            hist.innerHTML = "<p style='text-align:center;'>Fetching history from server...</p>";
+        async function deleteAssessment(id) {
+            if(!confirm("Delete this assessment?")) return;
             try {
-                const response = await fetch(WEB_APP_URL);
-                globalAssessments = await response.json();
-                
-                if(globalAssessments.length === 0) {
-                    hist.innerHTML = "<p style='text-align:center;'>No assessments recorded yet.</p>";
-                    return;
-                }
-                
-                hist.innerHTML = "";
-                [...globalAssessments].reverse().forEach(a => {
-                    const timeString = new Date(a.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    const isEditable = a.id ? true : false; 
-                    
-                    hist.innerHTML += `
-                        <div class="dashboard-card" style="border-left: 4px solid var(--primary);">
-                            <div style="display:flex; justify-content: space-between; align-items: center;">
-                                <strong style="font-size:16px;">${a.scout}</strong>
-                                <span style="font-size: 12px; color: #666;">${timeString}</span>
-                            </div>
-                            <p style="margin: 5px 0 10px 0; font-size: 14px; color: #444;">${a.activity} (Assessor: ${a.assessor})</p>
-                            ${isEditable ? `
-                                <div style="display: flex; gap: 10px;">
-                                    <button class="action-btn" style="padding: 8px; margin: 0; background: var(--secondary);" onclick="startEdit('${a.id}')">Edit</button>
-                                    <button class="action-btn" style="padding: 8px; margin: 0; background: var(--danger);" onclick="deleteAssessment('${a.id}')">Delete</button>
-                                </div>
-                            ` : `<p style="font-size:11px; color:#999; margin:0;">Legacy record (Cannot edit from app)</p>`}
-                        </div>
-                    `;
+                await fetch(WEB_APP_URL, {
+                    method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify({ action: "delete", id: id })
                 });
-            } catch (error) { hist.innerHTML = "<p style='color:red; text-align:center;'>Failed to load history.</p>"; }
+                showToast("Assessment Deleted!");
+                syncMasterData(); 
+            } catch (error) { showToast("Failed to delete.", "error"); }
         }
 
         function startEdit(id) {
@@ -606,7 +502,6 @@
             const select = document.getElementById('scoutSelect');
             if (!Array.from(select.options).some(opt => opt.value === record.scout)) select.add(new Option(record.scout, record.scout));
             select.value = record.scout;
-            
             document.getElementById('assessorName').value = record.assessor;
             document.getElementById('activitySelect').value = record.activity;
             document.getElementById('comments').value = record.comments;
@@ -615,7 +510,6 @@
                 const radio = document.querySelector(`input[name="crit_${index}"][value="${res.score}"]`);
                 if(radio) radio.checked = true;
             });
-            
             switchTab('assess');
         }
 
@@ -624,102 +518,85 @@
             document.getElementById('editWarning').style.display = 'none';
             document.querySelector('.submit-btn').innerText = "Submit Assessment";
             document.querySelector('.submit-btn').style.background = "var(--primary)";
-            
             document.getElementById('scoutConfirm').innerText = "";
             document.getElementById('scoutSelect').value = "";
             document.getElementById('comments').value = "";
             criteria.forEach((crit, index) => document.querySelector(`input[name="crit_${index}"][value="NOB"]`).checked = true);
         }
 
-        async function deleteAssessment(id) {
-            if(!confirm("Are you sure you want to delete this assessment? This cannot be undone.")) return;
-            
-            try {
-                await fetch(WEB_APP_URL, {
-                    method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" },
-                    body: JSON.stringify({ action: "delete", id: id })
+        // ---------- RENDER VIEWS ---------- //
+
+        function renderHistoryHtml() {
+            const hist = document.getElementById('historyContainer');
+            if(globalAssessments.length === 0) {
+                hist.innerHTML = "<p style='text-align:center;'>No assessments recorded yet.</p>"; return;
+            }
+            hist.innerHTML = "";
+            [...globalAssessments].reverse().forEach(a => {
+                const timeString = new Date(a.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                hist.innerHTML += `
+                    <div class="dashboard-card" style="border-left: 4px solid var(--primary);">
+                        <div style="display:flex; justify-content: space-between; align-items: center;">
+                            <strong style="font-size:16px;">${a.scout}</strong>
+                            <span style="font-size: 12px; color: #666;">${timeString}</span>
+                        </div>
+                        <p style="margin: 5px 0 10px 0; font-size: 14px; color: #444;">${a.activity} (Assessor: ${a.assessor})</p>
+                        ${a.id ? `
+                            <div style="display: flex; gap: 10px;">
+                                <button class="action-btn" style="padding: 8px; margin: 0; background: var(--secondary);" onclick="startEdit('${a.id}')">Edit</button>
+                                <button class="action-btn" style="padding: 8px; margin: 0; background: var(--danger);" onclick="deleteAssessment('${a.id}')">Delete</button>
+                            </div>
+                        ` : `<p style="font-size:11px; color:#999; margin:0;">Legacy record</p>`}
+                    </div>
+                `;
+            });
+        }
+
+        function renderDashboardHtml() {
+            const dash = document.getElementById('dashboardContainer');
+            if(globalAssessments.length === 0) { dash.innerHTML = "<p style='text-align:center;'>No assessments recorded yet.</p>"; return; }
+            dash.innerHTML = "";
+            const grouped = {};
+            globalAssessments.forEach(a => {
+                if(!grouped[a.scout]) grouped[a.scout] = [];
+                grouped[a.scout].push(a);
+            });
+
+            for (const [scoutName, records] of Object.entries(grouped)) {
+                let demonstratedCriteria = new Set();
+                records.forEach(rec => rec.results.forEach(res => { if(res.score === 'Y') demonstratedCriteria.add(res.criterion); }));
+                let totalScore = demonstratedCriteria.size;
+                let pct = Math.round((totalScore / 9) * 100);
+                
+                let criteriaHtml = "<ul style='padding-left: 20px; font-size: 14px; margin-bottom: 0;'>";
+                criteria.forEach(crit => {
+                    if(demonstratedCriteria.has(crit)) criteriaHtml += `<li style="color: var(--success); margin-bottom: 5px; font-weight: 700;">✓ ${crit}</li>`;
+                    else criteriaHtml += `<li style="color: #999; margin-bottom: 5px;">○ ${crit}</li>`;
                 });
-                showToast("Assessment Deleted!");
-                loadHistory(); 
-            } catch (error) {
-                showToast("Failed to delete. Check connection.", "error");
+                criteriaHtml += "</ul>";
+
+                dash.innerHTML += `
+                    <div class="dashboard-card">
+                        <div class="scout-header"><h3>${scoutName}</h3><span class="badge">${totalScore}/9 (${pct}%)</span></div>
+                        <div class="progress-bg"><div class="progress-fill" style="width: ${pct}%;"></div></div>
+                        <p style="font-size: 13px; color: #666; margin-top: 0; font-weight: 700;">Assessed at: ${records.map(r => r.activity).join(', ')}</p>
+                        ${criteriaHtml}
+                    </div>
+                `;
             }
         }
 
-        // ---------- DASHBOARD & EXPORT ---------- //
-
-        async function renderDashboard() {
-            const dash = document.getElementById('dashboardContainer');
-            dash.innerHTML = "<p style='text-align:center;'>Fetching live data from server...</p>";
-
-            try {
-                const response = await fetch(WEB_APP_URL);
-                globalAssessments = await response.json();
-
-                if(globalAssessments.length === 0) { dash.innerHTML = "<p style='text-align:center;'>No assessments recorded yet.</p>"; return; }
-
-                dash.innerHTML = "";
-                const grouped = {};
-                globalAssessments.forEach(a => {
-                    if(!grouped[a.scout]) grouped[a.scout] = [];
-                    grouped[a.scout].push(a);
-                });
-
-                for (const [scoutName, records] of Object.entries(grouped)) {
-                    let demonstratedCriteria = new Set();
-                    records.forEach(rec => rec.results.forEach(res => { if(res.score === 'Y') demonstratedCriteria.add(res.criterion); }));
-
-                    let totalScore = demonstratedCriteria.size;
-                    let pct = Math.round((totalScore / 9) * 100);
-                    
-                    let criteriaHtml = "<ul style='padding-left: 20px; font-size: 14px; margin-bottom: 0;'>";
-                    criteria.forEach(crit => {
-                        if(demonstratedCriteria.has(crit)) criteriaHtml += `<li style="color: var(--success); margin-bottom: 5px; font-weight: 700;">✓ ${crit}</li>`;
-                        else criteriaHtml += `<li style="color: #999; margin-bottom: 5px;">○ ${crit}</li>`;
-                    });
-                    criteriaHtml += "</ul>";
-
-                    dash.innerHTML += `
-                        <div class="dashboard-card">
-                            <div class="scout-header">
-                                <h3>${scoutName}</h3>
-                                <span class="badge">${totalScore}/9 (${pct}%)</span>
-                            </div>
-                            <div class="progress-bg">
-                                <div class="progress-fill" style="width: ${pct}%;"></div>
-                            </div>
-                            <p style="font-size: 13px; color: #666; margin-top: 0; font-weight: 700;">Assessed at: ${records.map(r => r.activity).join(', ')}</p>
-                            ${criteriaHtml}
-                        </div>
-                    `;
-                }
-            } catch (error) { dash.innerHTML = "<p style='color: var(--danger); text-align:center;'>Failed to load data.</p>"; }
-        }
-
         function exportDashboard() {
-            if (globalAssessments.length === 0) return showToast("No data to export. Refresh first.", "error");
-            
+            if (globalAssessments.length === 0) return showToast("No data to export.", "error");
             let csvContent = "Timestamp,Scout,Activity,Assessor," + criteria.map(c => `"${c}"`).join(",") + ",Total Ys,Comments\n";
-            
             globalAssessments.forEach(a => {
-                const row = [
-                    `"${new Date(a.timestamp).toLocaleString()}"`,
-                    `"${a.scout}"`,
-                    `"${a.activity}"`,
-                    `"${a.assessor}"`,
-                    ...a.results.map(r => `"${r.score}"`),
-                    a.yCount,
-                    `"${(a.comments || "").replace(/"/g, '""')}"`
-                ];
+                const row = [`"${new Date(a.timestamp).toLocaleString()}"`, `"${a.scout}"`, `"${a.activity}"`, `"${a.assessor}"`, ...a.results.map(r => `"${r.score}"`), a.yCount, `"${(a.comments || "").replace(/"/g, '""')}"`];
                 csvContent += row.join(",") + "\n";
             });
-
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
-            link.setAttribute("href", url);
+            link.setAttribute("href", URL.createObjectURL(blob));
             link.setAttribute("download", "PL_Assessments_Export.csv");
-            link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
