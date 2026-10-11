@@ -664,27 +664,44 @@
         function renderDashboardHtml() {
             const dash = document.getElementById('dashboardContainer');
             
-            const grouped = {};
-            globalAssessments.forEach(a => {
-                if(!grouped[a.scout]) grouped[a.scout] = [];
-                grouped[a.scout].push(a);
+            let unifiedScouts = {};
+
+            // 1. Build base list from current configuration (ensures current patrol is used)
+            configuredScouts.forEach(s => {
+                if(s && s.name) {
+                    unifiedScouts[s.name] = { name: s.name, patrol: s.patrol, records: [] };
+                }
             });
 
-            // Create a unified list of ALL configured scouts plus any historic scouts not in the config list
-            const allScoutNames = Array.from(new Set([
-                ...configuredScouts.map(s => `${s.name} (${s.patrol})`),
-                ...Object.keys(grouped)
-            ])).sort();
+            // 2. Merge all assessments, extracting the base name to combine history
+            globalAssessments.forEach(a => {
+                let baseName = a.scout;
+                let histPatrol = "";
+                if(baseName && baseName.includes(" (") && baseName.endsWith(")")) {
+                    baseName = baseName.substring(0, baseName.lastIndexOf(" ("));
+                    // Used +2 to skip the space and the opening parenthesis
+                    histPatrol = a.scout.substring(a.scout.lastIndexOf(" (") + 2, a.scout.length - 1);
+                }
+                
+                // If a scout was deleted from config but still has history, re-add them using their historic patrol
+                if (!unifiedScouts[baseName]) {
+                    unifiedScouts[baseName] = { name: baseName, patrol: histPatrol, records: [] };
+                }
+                unifiedScouts[baseName].records.push(a);
+            });
 
-            if(allScoutNames.length === 0) { 
+            const sortedNames = Object.keys(unifiedScouts).sort();
+
+            if(sortedNames.length === 0) { 
                 dash.innerHTML = "<p style='text-align:center;'>No scouts configured or assessed yet.</p>"; 
                 return; 
             }
 
             dash.innerHTML = "";
 
-            allScoutNames.forEach((scoutNameFull, index) => {
-                const records = grouped[scoutNameFull] || [];
+            sortedNames.forEach((name, index) => {
+                const scoutData = unifiedScouts[name];
+                const records = scoutData.records;
                 
                 let demonstratedCriteria = new Set();
                 records.forEach(rec => rec.results.forEach(res => { if(res.score === 'Y') demonstratedCriteria.add(res.criterion); }));
@@ -692,14 +709,14 @@
                 let pct = Math.round((totalScore / 9) * 100);
                 
                 // Color Logic
-                let colorHex = 'var(--danger)'; // Red for < 50%
+                let colorHex = 'var(--danger)'; 
                 let badgeTextColor = '#fff';
                 
                 if (pct === 100) { 
-                    colorHex = 'var(--success)'; // Green for 100%
+                    colorHex = 'var(--success)'; 
                 } else if (pct >= 50) { 
-                    colorHex = 'var(--amber)'; // Amber for 50-99%
-                    badgeTextColor = '#000'; // Black text is easier to read on amber
+                    colorHex = 'var(--amber)'; 
+                    badgeTextColor = '#000'; 
                 }
                 
                 let criteriaHtml = "<ul style='padding-left: 20px; font-size: 14px; margin-bottom: 0;'>";
@@ -711,19 +728,11 @@
                 
                 let activitiesText = records.length > 0 ? `Assessed at: ${records.map(r => r.activity).join(', ')}` : "No assessments recorded yet.";
 
-                // Parse out name and patrol for cleaner UI if possible
-                let displayName = scoutNameFull;
-                let displayPatrol = "";
-                if(scoutNameFull.includes(" (") && scoutNameFull.endsWith(")")) {
-                    displayName = scoutNameFull.substring(0, scoutNameFull.lastIndexOf(" ("));
-                    displayPatrol = scoutNameFull.substring(scoutNameFull.lastIndexOf(" (") + 1, scoutNameFull.length - 1);
-                }
-
                 dash.innerHTML += `
                     <div class="dashboard-card" style="border-left: 6px solid ${colorHex};">
                         <div class="scout-header" onclick="toggleScoutDetails(${index})">
                             <div style="flex-grow: 1;">
-                                <h3>${displayName} <span style="font-size:14px; color:#666; font-weight:normal;">${displayPatrol ? `(${displayPatrol})` : ''}</span></h3>
+                                <h3>${scoutData.name} <span style="font-size:14px; color:#666; font-weight:normal;">${scoutData.patrol ? `(${scoutData.patrol})` : ''}</span></h3>
                                 <div class="progress-bg"><div class="progress-fill" style="width: ${pct}%; background: ${colorHex};"></div></div>
                             </div>
                             <div style="display:flex; align-items: center; gap: 10px; margin-left: 15px;">
