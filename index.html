@@ -11,7 +11,7 @@
     <style>
         :root { 
             --primary: #7413dc; --secondary: #00a794; --bg: #f4f4f9; 
-            --text: #333; --danger: #e30043; --success: #28a745;
+            --text: #333; --danger: #e30043; --success: #28a745; --amber: #ffc107;
             --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
         
@@ -60,9 +60,6 @@
         .radio-group input[value="N"]:checked + label { background: #ffebee; border-color: var(--danger); color: var(--danger); }
         .radio-group input[value="NOB"]:checked + label { background: #e0e0e0; border-color: #999; color: #333; }
         
-        /* ------------------------------------- */
-        /* PROFESSIONAL SCANNER OVERRIDES        */
-        /* ------------------------------------- */
         #reader { width: 100%; max-width: 400px; margin: 0 auto 15px auto; border-radius: 12px; overflow: hidden; box-shadow: var(--card-shadow); border: none !important; background: white; text-align: center; }
         #reader * { font-family: 'Nunito Sans', sans-serif !important; }
         #reader video { border-radius: 12px !important; object-fit: cover !important; }
@@ -72,15 +69,15 @@
         #reader a { color: var(--primary) !important; text-decoration: none !important; font-weight: 700 !important; }
         #reader a:hover { text-decoration: underline !important; }
         #reader img { display: none !important; } 
-        /* ------------------------------------- */
 
-        .dashboard-card { background: white; padding: 20px; margin-bottom: 15px; border-radius: 12px; box-shadow: var(--card-shadow); border: 1px solid #eee; border-left: 5px solid var(--secondary); }
-        .scout-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 15px; }
-        .scout-header h3 { font-size: 18px; margin: 0; color: #111; }
-        .badge { background: var(--secondary); color: white; padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 800; }
+        .dashboard-card { background: white; margin-bottom: 15px; border-radius: 12px; box-shadow: var(--card-shadow); border: 1px solid #eee; overflow: hidden; }
+        .scout-header { display: flex; justify-content: space-between; align-items: center; padding: 15px; cursor: pointer; transition: background 0.2s; }
+        .scout-header:active { background: #f8f9fa; }
+        .scout-header h3 { font-size: 17px; margin: 0 0 8px 0; color: #111; }
+        .badge { padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 800; min-width: 45px; text-align: center; }
         
-        .progress-bg { background: #e9ecef; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 15px; }
-        .progress-fill { background: var(--secondary); height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+        .progress-bg { background: #e9ecef; height: 6px; border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
         
         .admin-section { background: white; padding: 20px; border-radius: 12px; box-shadow: var(--card-shadow); border: 1px solid #eee; margin-bottom: 20px; }
         .admin-section h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; }
@@ -249,7 +246,7 @@
         let globalAssessments = [];
         let editingAssessmentId = null;
         let editingScoutIndex = null;
-        let autoSyncInterval = null; // Auto-sync timer variable
+        let autoSyncInterval = null; 
 
         function showToast(message, type = "success") {
             const toast = document.getElementById("toast");
@@ -264,9 +261,8 @@
             try { initScanner(); } catch(e) {}
             try { syncMasterData(); } catch(e) {}
             
-            // Start the 3-minute automatic background sync
             autoSyncInterval = setInterval(() => {
-                syncMasterData(true); // true = silent background sync
+                syncMasterData(true); 
             }, 180000); 
         };
 
@@ -338,8 +334,6 @@
             }
         }
 
-        // ---------- CENTRAL SYNC LOGIC ---------- //
-
         async function syncMasterData(silent = false) {
             const syncIcon = document.getElementById('syncIcon');
             if (syncIcon && !silent) syncIcon.classList.add('spinning');
@@ -383,8 +377,6 @@
                 showToast("Saved Locally (Cloud sync failed)", "error");
             }
         }
-
-        // ---------- MANAGE SCOUTS ---------- //
 
         function submitScout() {
             const name = document.getElementById('newScoutName').value.trim();
@@ -436,8 +428,6 @@
             refreshDropdownsAndLists();
             pushConfigToServer('scouts');
         }
-
-        // ---------- MANAGE ACTIVITIES ---------- //
 
         function addActivity() {
             const act = document.getElementById('newActivityName').value.trim();
@@ -499,8 +489,6 @@
             reader.readAsText(file);
         }
 
-        // ---------- UI & PRINTING ---------- //
-
         function printQRCodes() {
             if(configuredScouts.length === 0) return showToast("Add some Scouts first.", "error");
             const printArea = document.getElementById('printArea');
@@ -549,8 +537,6 @@
             }
         }
 
-        // ---------- ASSESSMENTS ---------- //
-
         async function submitAssessment() {
             const scout = document.getElementById('scoutSelect').value;
             const activity = document.getElementById('activitySelect').value;
@@ -582,7 +568,7 @@
                 });
                 showToast(editingAssessmentId ? "Assessment Updated!" : "Assessment Saved!");
                 cancelAssessmentEdit(); 
-                syncMasterData(true); // Silent sync after submitting to get fresh data globally
+                syncMasterData(true); 
             } catch (error) {
                 showToast("Failed to submit. Check connection.", "error");
             } finally {
@@ -637,8 +623,6 @@
             criteria.forEach((crit, index) => document.querySelector(`input[name="crit_${index}"][value="NOB"]`).checked = true);
         }
 
-        // ---------- RENDER VIEWS ---------- //
-
         function renderHistoryHtml() {
             const hist = document.getElementById('historyContainer');
             if(globalAssessments.length === 0) {
@@ -648,7 +632,7 @@
             [...globalAssessments].reverse().forEach(a => {
                 const timeString = new Date(a.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 hist.innerHTML += `
-                    <div class="dashboard-card" style="border-left: 4px solid var(--primary);">
+                    <div class="dashboard-card" style="border-left: 4px solid var(--primary); padding: 20px;">
                         <div style="display:flex; justify-content: space-between; align-items: center;">
                             <strong style="font-size:16px;">${a.scout}</strong>
                             <span style="font-size: 12px; color: #666;">${timeString}</span>
@@ -665,21 +649,58 @@
             });
         }
 
+        function toggleScoutDetails(index) {
+            const details = document.getElementById(`scout-details-${index}`);
+            const chevron = document.getElementById(`chevron-${index}`);
+            if (details.style.display === 'none') {
+                details.style.display = 'block';
+                chevron.style.transform = 'rotate(180deg)';
+            } else {
+                details.style.display = 'none';
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        }
+
         function renderDashboardHtml() {
             const dash = document.getElementById('dashboardContainer');
-            if(globalAssessments.length === 0) { dash.innerHTML = "<p style='text-align:center;'>No assessments recorded yet.</p>"; return; }
-            dash.innerHTML = "";
+            
             const grouped = {};
             globalAssessments.forEach(a => {
                 if(!grouped[a.scout]) grouped[a.scout] = [];
                 grouped[a.scout].push(a);
             });
 
-            for (const [scoutName, records] of Object.entries(grouped)) {
+            // Create a unified list of ALL configured scouts plus any historic scouts not in the config list
+            const allScoutNames = Array.from(new Set([
+                ...configuredScouts.map(s => `${s.name} (${s.patrol})`),
+                ...Object.keys(grouped)
+            ])).sort();
+
+            if(allScoutNames.length === 0) { 
+                dash.innerHTML = "<p style='text-align:center;'>No scouts configured or assessed yet.</p>"; 
+                return; 
+            }
+
+            dash.innerHTML = "";
+
+            allScoutNames.forEach((scoutNameFull, index) => {
+                const records = grouped[scoutNameFull] || [];
+                
                 let demonstratedCriteria = new Set();
                 records.forEach(rec => rec.results.forEach(res => { if(res.score === 'Y') demonstratedCriteria.add(res.criterion); }));
                 let totalScore = demonstratedCriteria.size;
                 let pct = Math.round((totalScore / 9) * 100);
+                
+                // Color Logic
+                let colorHex = 'var(--danger)'; // Red for < 50%
+                let badgeTextColor = '#fff';
+                
+                if (pct === 100) { 
+                    colorHex = 'var(--success)'; // Green for 100%
+                } else if (pct >= 50) { 
+                    colorHex = 'var(--amber)'; // Amber for 50-99%
+                    badgeTextColor = '#000'; // Black text is easier to read on amber
+                }
                 
                 let criteriaHtml = "<ul style='padding-left: 20px; font-size: 14px; margin-bottom: 0;'>";
                 criteria.forEach(crit => {
@@ -687,16 +708,36 @@
                     else criteriaHtml += `<li style="color: #999; margin-bottom: 5px;">○ ${crit}</li>`;
                 });
                 criteriaHtml += "</ul>";
+                
+                let activitiesText = records.length > 0 ? `Assessed at: ${records.map(r => r.activity).join(', ')}` : "No assessments recorded yet.";
+
+                // Parse out name and patrol for cleaner UI if possible
+                let displayName = scoutNameFull;
+                let displayPatrol = "";
+                if(scoutNameFull.includes(" (") && scoutNameFull.endsWith(")")) {
+                    displayName = scoutNameFull.substring(0, scoutNameFull.lastIndexOf(" ("));
+                    displayPatrol = scoutNameFull.substring(scoutNameFull.lastIndexOf(" (") + 1, scoutNameFull.length - 1);
+                }
 
                 dash.innerHTML += `
-                    <div class="dashboard-card">
-                        <div class="scout-header"><h3>${scoutName}</h3><span class="badge">${totalScore}/9 (${pct}%)</span></div>
-                        <div class="progress-bg"><div class="progress-fill" style="width: ${pct}%;"></div></div>
-                        <p style="font-size: 13px; color: #666; margin-top: 0; font-weight: 700;">Assessed at: ${records.map(r => r.activity).join(', ')}</p>
-                        ${criteriaHtml}
+                    <div class="dashboard-card" style="border-left: 6px solid ${colorHex};">
+                        <div class="scout-header" onclick="toggleScoutDetails(${index})">
+                            <div style="flex-grow: 1;">
+                                <h3>${displayName} <span style="font-size:14px; color:#666; font-weight:normal;">${displayPatrol ? `(${displayPatrol})` : ''}</span></h3>
+                                <div class="progress-bg"><div class="progress-fill" style="width: ${pct}%; background: ${colorHex};"></div></div>
+                            </div>
+                            <div style="display:flex; align-items: center; gap: 10px; margin-left: 15px;">
+                                <span class="badge" style="background: ${colorHex}; color: ${badgeTextColor};">${pct}%</span>
+                                <svg id="chevron-${index}" style="width: 24px; height: 24px; fill: #666; transition: transform 0.3s;" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+                            </div>
+                        </div>
+                        <div id="scout-details-${index}" style="display: none; padding: 0 15px 15px 15px; border-top: 1px solid #eee; background: #fafafa;">
+                            <p style="font-size: 13px; color: #666; margin: 10px 0; font-weight: 700;">${activitiesText}</p>
+                            ${criteriaHtml}
+                        </div>
                     </div>
                 `;
-            }
+            });
         }
 
         function exportDashboard() {
