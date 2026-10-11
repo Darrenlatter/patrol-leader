@@ -111,6 +111,7 @@
         <button id="nav-assess" class="active" onclick="switchTab('assess')"><svg viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>Assess</button>
         <button id="nav-history" onclick="switchTab('history')"><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/><path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>History</button>
         <button id="nav-dash" onclick="switchTab('dashboard')"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>Dashboard</button>
+        <button id="nav-patrols" onclick="switchTab('patrols')"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>Patrols</button>
         <button id="nav-admin" onclick="switchTab('admin')"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>Manage</button>
     </nav>
 
@@ -126,7 +127,18 @@
 
             <div class="form-group" style="background: white; padding: 15px; border-radius: 12px; box-shadow: var(--card-shadow);">
                 <label>Scan Scout QR Code (or select manually)</label>
-                <div id="reader"><span style="color:#888; font-size:14px; padding: 20px;">Scanner Loading...</span></div>
+                
+                <div id="startScannerContainer" style="text-align: center; margin: 15px 0;">
+                    <button id="startScannerBtn" class="action-btn" style="background: var(--secondary); padding: 12px; margin: 0; display: inline-block; width: auto;" onclick="startScanner()">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: white;"><path d="M3 4V1h2v3h3v2H5v3H3V6H0V4h3zm3 6V7h3V4h7l1.83 2H21c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V10h3zm7 9c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-3.2-5c0 1.77 1.43 3.2 3.2 3.2s3.2-1.43 3.2-3.2-1.43-3.2-3.2-3.2-3.2 1.43-3.2 3.2z"/></svg>
+                            Start Camera Scanner
+                        </div>
+                    </button>
+                </div>
+
+                <div id="reader" style="display: none;"></div>
+                
                 <select id="scoutSelect" style="margin-top: 10px;"><option value="">-- Manual Fallback: Select Scout --</option></select>
                 <p id="scoutConfirm" style="color: var(--success); font-weight: 800; margin-top: 10px; text-align: center;"></p>
             </div>
@@ -164,7 +176,12 @@
             <div id="dashboardContainer"><p style="text-align:center; color: #666; font-weight: 700;">Loading...</p></div>
         </div>
 
-        <!-- 4. MANAGE & QR TAB -->
+        <!-- 4. PATROLS TAB -->
+        <div id="patrols" class="tab-content">
+            <div id="patrolsContainer"><p style="text-align:center; color: #666; font-weight: 700;">Loading...</p></div>
+        </div>
+
+        <!-- 5. MANAGE & QR TAB -->
         <div id="admin" class="tab-content">
             <div class="admin-section">
                 <h3>Manage Scouts</h3>
@@ -258,7 +275,6 @@
         window.onload = () => { 
             try { buildCriteriaForm(); } catch(e) {}
             try { refreshDropdownsAndLists(); } catch(e) {}
-            try { initScanner(); } catch(e) {}
             try { syncMasterData(); } catch(e) {}
             
             autoSyncInterval = setInterval(() => {
@@ -355,6 +371,7 @@
                 refreshDropdownsAndLists();
                 renderDashboardHtml();
                 renderHistoryHtml();
+                renderPatrolsHtml();
                 
                 if (!silent) showToast("Sync Complete!");
             } catch (error) {
@@ -511,10 +528,14 @@
             if (tabId === 'assess') document.getElementById('nav-assess').classList.add('active');
             else if (tabId === 'history') { document.getElementById('nav-history').classList.add('active'); renderHistoryHtml(); }
             else if (tabId === 'dashboard') { document.getElementById('nav-dash').classList.add('active'); renderDashboardHtml(); }
+            else if (tabId === 'patrols') { document.getElementById('nav-patrols').classList.add('active'); renderPatrolsHtml(); }
             else if (tabId === 'admin') document.getElementById('nav-admin').classList.add('active');
         }
 
-        function initScanner() {
+        function startScanner() {
+            document.getElementById('startScannerContainer').style.display = 'none';
+            document.getElementById('reader').style.display = 'block';
+            
             try {
                 if (typeof Html5QrcodeScanner === 'undefined') {
                     document.getElementById('reader').innerHTML = '<span style="color:#e30043; font-size:14px; padding: 20px;">Scanner library offline. Use manual fallback.</span>';
@@ -649,6 +670,46 @@
             });
         }
 
+        function renderPatrolsHtml() {
+            const container = document.getElementById('patrolsContainer');
+            
+            if (configuredScouts.length === 0) {
+                container.innerHTML = "<p style='text-align:center;'>No scouts configured yet.</p>";
+                return;
+            }
+
+            const groupedByPatrol = {};
+            configuredScouts.forEach(s => {
+                const p = s.patrol || "No Patrol";
+                if(!groupedByPatrol[p]) groupedByPatrol[p] = [];
+                groupedByPatrol[p].push(s.name);
+            });
+
+            const sortedPatrols = Object.keys(groupedByPatrol).sort();
+            
+            container.innerHTML = "";
+            sortedPatrols.forEach(patrol => {
+                const members = groupedByPatrol[patrol].sort();
+                let membersHtml = `<ul style="list-style: none; padding: 0; margin: 0;">`;
+                members.forEach(m => {
+                    membersHtml += `<li style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; color: #444; font-weight: 700;">${m}</li>`;
+                });
+                membersHtml += `</ul>`;
+
+                container.innerHTML += `
+                    <div class="dashboard-card" style="border-left: 5px solid var(--primary); padding: 20px;">
+                        <div style="border-bottom: 2px solid #f0f0f0; padding-bottom: 12px; margin-bottom: 10px;">
+                            <h3 style="margin: 0; color: var(--primary); display: flex; justify-content: space-between; align-items: center;">
+                                ${patrol}
+                                <span class="badge" style="background: var(--secondary);">${members.length}</span>
+                            </h3>
+                        </div>
+                        ${membersHtml}
+                    </div>
+                `;
+            });
+        }
+
         function toggleScoutDetails(index) {
             const details = document.getElementById(`scout-details-${index}`);
             const chevron = document.getElementById(`chevron-${index}`);
@@ -666,24 +727,20 @@
             
             let unifiedScouts = {};
 
-            // 1. Build base list from current configuration (ensures current patrol is used)
             configuredScouts.forEach(s => {
                 if(s && s.name) {
                     unifiedScouts[s.name] = { name: s.name, patrol: s.patrol, records: [] };
                 }
             });
 
-            // 2. Merge all assessments, extracting the base name to combine history
             globalAssessments.forEach(a => {
                 let baseName = a.scout;
                 let histPatrol = "";
                 if(baseName && baseName.includes(" (") && baseName.endsWith(")")) {
                     baseName = baseName.substring(0, baseName.lastIndexOf(" ("));
-                    // Used +2 to skip the space and the opening parenthesis
                     histPatrol = a.scout.substring(a.scout.lastIndexOf(" (") + 2, a.scout.length - 1);
                 }
                 
-                // If a scout was deleted from config but still has history, re-add them using their historic patrol
                 if (!unifiedScouts[baseName]) {
                     unifiedScouts[baseName] = { name: baseName, patrol: histPatrol, records: [] };
                 }
@@ -708,7 +765,6 @@
                 let totalScore = demonstratedCriteria.size;
                 let pct = Math.round((totalScore / 9) * 100);
                 
-                // Color Logic
                 let colorHex = 'var(--danger)'; 
                 let badgeTextColor = '#fff';
                 
