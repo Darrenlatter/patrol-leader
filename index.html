@@ -66,15 +66,12 @@
         #reader { width: 100%; max-width: 400px; margin: 0 auto 15px auto; border-radius: 12px; overflow: hidden; box-shadow: var(--card-shadow); border: none !important; background: white; text-align: center; }
         #reader * { font-family: 'Nunito Sans', sans-serif !important; }
         #reader video { border-radius: 12px !important; object-fit: cover !important; }
-        /* Style the ugly default buttons */
         #reader button { padding: 10px 20px !important; background-color: var(--secondary) !important; color: white !important; border: none !important; border-radius: 8px !important; font-weight: 800 !important; cursor: pointer !important; margin: 10px 0 !important; font-size: 14px !important; transition: transform 0.1s !important; }
         #reader button:active { transform: translateY(2px) !important; }
-        /* Style the camera chooser dropdown */
         #reader select { margin: 10px 0 15px 0 !important; padding: 10px !important; border-radius: 8px !important; border: 1px solid #ddd !important; width: 90% !important; font-size: 14px !important; display: inline-block !important; }
-        /* Fix standard text and links */
         #reader a { color: var(--primary) !important; text-decoration: none !important; font-weight: 700 !important; }
         #reader a:hover { text-decoration: underline !important; }
-        #reader img { display: none !important; } /* Hides the ugly info icon */
+        #reader img { display: none !important; } 
         /* ------------------------------------- */
 
         .dashboard-card { background: white; padding: 20px; margin-bottom: 15px; border-radius: 12px; box-shadow: var(--card-shadow); border: 1px solid #eee; border-left: 5px solid var(--secondary); }
@@ -252,6 +249,7 @@
         let globalAssessments = [];
         let editingAssessmentId = null;
         let editingScoutIndex = null;
+        let autoSyncInterval = null; // Auto-sync timer variable
 
         function showToast(message, type = "success") {
             const toast = document.getElementById("toast");
@@ -265,6 +263,11 @@
             try { refreshDropdownsAndLists(); } catch(e) {}
             try { initScanner(); } catch(e) {}
             try { syncMasterData(); } catch(e) {}
+            
+            // Start the 3-minute automatic background sync
+            autoSyncInterval = setInterval(() => {
+                syncMasterData(true); // true = silent background sync
+            }, 180000); 
         };
 
         function buildCriteriaForm() {
@@ -335,11 +338,14 @@
             }
         }
 
-        async function syncMasterData() {
+        // ---------- CENTRAL SYNC LOGIC ---------- //
+
+        async function syncMasterData(silent = false) {
             const syncIcon = document.getElementById('syncIcon');
-            if (syncIcon) syncIcon.classList.add('spinning');
+            if (syncIcon && !silent) syncIcon.classList.add('spinning');
             
-            showToast("Syncing with Server...", "sync");
+            if (!silent) showToast("Syncing with Server...", "sync");
+            
             try {
                 const response = await fetch(WEB_APP_URL);
                 const data = await response.json();
@@ -355,11 +361,12 @@
                 refreshDropdownsAndLists();
                 renderDashboardHtml();
                 renderHistoryHtml();
-                showToast("Sync Complete!");
+                
+                if (!silent) showToast("Sync Complete!");
             } catch (error) {
-                showToast("Sync failed. Using local data.", "error");
+                if (!silent) showToast("Sync failed. Using local data.", "error");
             } finally {
-                if (syncIcon) syncIcon.classList.remove('spinning');
+                if (syncIcon && !silent) syncIcon.classList.remove('spinning');
             }
         }
 
@@ -376,6 +383,8 @@
                 showToast("Saved Locally (Cloud sync failed)", "error");
             }
         }
+
+        // ---------- MANAGE SCOUTS ---------- //
 
         function submitScout() {
             const name = document.getElementById('newScoutName').value.trim();
@@ -427,6 +436,8 @@
             refreshDropdownsAndLists();
             pushConfigToServer('scouts');
         }
+
+        // ---------- MANAGE ACTIVITIES ---------- //
 
         function addActivity() {
             const act = document.getElementById('newActivityName').value.trim();
@@ -488,6 +499,8 @@
             reader.readAsText(file);
         }
 
+        // ---------- UI & PRINTING ---------- //
+
         function printQRCodes() {
             if(configuredScouts.length === 0) return showToast("Add some Scouts first.", "error");
             const printArea = document.getElementById('printArea');
@@ -536,6 +549,8 @@
             }
         }
 
+        // ---------- ASSESSMENTS ---------- //
+
         async function submitAssessment() {
             const scout = document.getElementById('scoutSelect').value;
             const activity = document.getElementById('activitySelect').value;
@@ -567,7 +582,7 @@
                 });
                 showToast(editingAssessmentId ? "Assessment Updated!" : "Assessment Saved!");
                 cancelAssessmentEdit(); 
-                syncMasterData(); 
+                syncMasterData(true); // Silent sync after submitting to get fresh data globally
             } catch (error) {
                 showToast("Failed to submit. Check connection.", "error");
             } finally {
@@ -584,7 +599,7 @@
                     body: JSON.stringify({ action: "delete", id: id })
                 });
                 showToast("Assessment Deleted!");
-                syncMasterData(); 
+                syncMasterData(true); 
             } catch (error) { showToast("Failed to delete.", "error"); }
         }
 
@@ -621,6 +636,8 @@
             document.getElementById('comments').value = "";
             criteria.forEach((crit, index) => document.querySelector(`input[name="crit_${index}"][value="NOB"]`).checked = true);
         }
+
+        // ---------- RENDER VIEWS ---------- //
 
         function renderHistoryHtml() {
             const hist = document.getElementById('historyContainer');
