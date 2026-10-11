@@ -85,7 +85,8 @@
         .list-group li { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; align-items: center; font-weight: 700; color: #555; }
         .delete-btn { background: #ffebee; color: var(--danger); border: none; padding: 8px 12px; border-radius: 6px; font-weight: 800; cursor: pointer; }
         
-        .flex-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .flex-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+        .flex-row input { flex: 1; min-width: 130px; }
         .import-box { background: #f8f9fa; padding: 15px; border: 2px dashed #ddd; border-radius: 8px; margin-bottom: 15px; text-align: center; }
         
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 16px; position: fixed; z-index: 2000; left: 50%; transform: translateX(-50%); bottom: 90px; font-weight: 700; opacity: 0; transition: opacity 0.3s, bottom 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.2); pointer-events: none; }
@@ -186,7 +187,7 @@
             <div class="admin-section">
                 <h3>Manage Scouts</h3>
                 <div class="import-box">
-                    <label style="font-size: 14px; margin-bottom: 10px;">Bulk Import Scouts (CSV: Name, Patrol)</label>
+                    <label style="font-size: 14px; margin-bottom: 10px;">Bulk Import Scouts (CSV: Name, Patrol, Group)</label>
                     <input type="file" id="scoutCsvUpload" accept=".csv" style="margin-bottom: 10px;">
                     <button class="action-btn" style="background: var(--secondary); padding: 10px; font-size: 14px;" onclick="importScoutsCSV()">Import CSV & Sync</button>
                 </div>
@@ -194,6 +195,7 @@
                 <div class="flex-row" style="margin-top: 15px;">
                     <input type="text" id="newScoutName" placeholder="Scout Name">
                     <input type="text" id="newScoutPatrol" placeholder="Patrol">
+                    <input type="text" id="newScoutGroup" placeholder="Group (e.g. 44th Croydon)">
                 </div>
                 
                 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
@@ -312,7 +314,10 @@
             if (scoutSelect) {
                 scoutSelect.innerHTML = '<option value="">-- Manual Fallback: Select Scout --</option>';
                 configuredScouts.forEach(s => {
-                    if(s && s.name) scoutSelect.innerHTML += `<option value="${s.name} (${s.patrol})">${s.name} (${s.patrol})</option>`;
+                    if(s && s.name) {
+                        const valString = s.group ? `${s.name} (${s.patrol} - ${s.group})` : `${s.name} (${s.patrol})`;
+                        scoutSelect.innerHTML += `<option value="${valString}">${valString}</option>`;
+                    }
                 });
             }
 
@@ -330,7 +335,10 @@
                     if(!s || !s.name) return;
                     adminScoutList.innerHTML += `
                         <li style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
-                            <span style="flex-grow: 1;">${s.name} - <strong style="color: var(--secondary);">${s.patrol}</strong></span>
+                            <span style="flex-grow: 1;">
+                                ${s.name} - <strong style="color: var(--secondary);">${s.patrol}</strong> 
+                                ${s.group ? `<span style="font-size:12px; color:#888;">(${s.group})</span>` : ''}
+                            </span>
                             <div style="display: flex; gap: 8px;">
                                 <button style="background: #17a2b8; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 800; cursor: pointer;" onclick="editScout(${index})">Edit</button>
                                 <button class="delete-btn" style="padding: 6px 12px;" onclick="deleteScout(${index})">Delete</button>
@@ -398,13 +406,15 @@
         function submitScout() {
             const name = document.getElementById('newScoutName').value.trim();
             const patrol = document.getElementById('newScoutPatrol').value.trim();
-            if(!name || !patrol) return showToast("Please enter both Name and Patrol.", "error");
+            const group = document.getElementById('newScoutGroup').value.trim();
+            
+            if(!name || !patrol) return showToast("Please enter at least Name and Patrol.", "error");
             
             if (editingScoutIndex !== null) {
-                configuredScouts[editingScoutIndex] = { name, patrol };
+                configuredScouts[editingScoutIndex] = { name, patrol, group };
                 showToast("Scout Updated");
             } else {
-                configuredScouts.push({ name, patrol });
+                configuredScouts.push({ name, patrol, group });
                 showToast("Scout Added");
             }
             
@@ -416,8 +426,9 @@
         
         function editScout(index) {
             editingScoutIndex = index;
-            document.getElementById('newScoutName').value = configuredScouts[index].name;
-            document.getElementById('newScoutPatrol').value = configuredScouts[index].patrol;
+            document.getElementById('newScoutName').value = configuredScouts[index].name || '';
+            document.getElementById('newScoutPatrol').value = configuredScouts[index].patrol || '';
+            document.getElementById('newScoutGroup').value = configuredScouts[index].group || '';
             
             const submitBtn = document.getElementById('scoutSubmitBtn');
             submitBtn.innerText = "Update Scout";
@@ -431,6 +442,7 @@
             editingScoutIndex = null;
             document.getElementById('newScoutName').value = "";
             document.getElementById('newScoutPatrol').value = "";
+            document.getElementById('newScoutGroup').value = "";
             
             const submitBtn = document.getElementById('scoutSubmitBtn');
             submitBtn.innerText = "Add Single Scout";
@@ -472,9 +484,12 @@
                 lines.forEach(line => {
                     const parts = line.split(',');
                     if(parts.length >= 2) {
-                        const name = parts[0].trim(), patrol = parts[1].trim();
+                        const name = parts[0].trim();
+                        const patrol = parts[1].trim();
+                        const group = parts.length > 2 ? parts[2].trim() : "";
+                        
                         if(name && patrol && name.toLowerCase() !== 'name' && name.toLowerCase() !== 'scout') { 
-                            configuredScouts.push({ name, patrol });
+                            configuredScouts.push({ name, patrol, group });
                         }
                     }
                 });
@@ -513,8 +528,16 @@
             configuredScouts.forEach(scout => {
                 const card = document.createElement('div');
                 card.className = 'qr-card';
-                const qr = new QRious({ value: `${scout.name} (${scout.patrol})`, size: 150 });
-                card.innerHTML = `<img src="${qr.toDataURL()}"><h4>${scout.name}</h4><p style="margin: 0; font-size: 14px; color: #555;">${scout.patrol}</p>`;
+                
+                const qrValue = scout.group ? `${scout.name} (${scout.patrol} - ${scout.group})` : `${scout.name} (${scout.patrol})`;
+                const qr = new QRious({ value: qrValue, size: 150 });
+                
+                card.innerHTML = `
+                    <img src="${qr.toDataURL()}">
+                    <h4>${scout.name}</h4>
+                    <p style="margin: 0; font-size: 14px; font-weight: bold; color: #333;">${scout.patrol}</p>
+                    ${scout.group ? `<p style="margin: 3px 0 0 0; font-size: 12px; color: #777;">${scout.group}</p>` : ''}
+                `;
                 printArea.appendChild(card);
             });
             setTimeout(() => { window.print(); }, 300);
@@ -682,17 +705,22 @@
             configuredScouts.forEach(s => {
                 const p = s.patrol || "No Patrol";
                 if(!groupedByPatrol[p]) groupedByPatrol[p] = [];
-                groupedByPatrol[p].push(s.name);
+                groupedByPatrol[p].push({ name: s.name, group: s.group });
             });
 
             const sortedPatrols = Object.keys(groupedByPatrol).sort();
             
             container.innerHTML = "";
             sortedPatrols.forEach(patrol => {
-                const members = groupedByPatrol[patrol].sort();
+                // Sort members alphabetically by name
+                const members = groupedByPatrol[patrol].sort((a, b) => a.name.localeCompare(b.name));
+                
                 let membersHtml = `<ul style="list-style: none; padding: 0; margin: 0;">`;
                 members.forEach(m => {
-                    membersHtml += `<li style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; color: #444; font-weight: 700;">${m}</li>`;
+                    membersHtml += `<li style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; color: #444; font-weight: 700;">
+                        ${m.name} 
+                        ${m.group ? `<span style="color:#888; font-size:13px; font-weight: normal; margin-left: 5px;">(${m.group})</span>` : ''}
+                    </li>`;
                 });
                 membersHtml += `</ul>`;
 
@@ -727,22 +755,36 @@
             
             let unifiedScouts = {};
 
+            // Build base list from current configuration
             configuredScouts.forEach(s => {
                 if(s && s.name) {
-                    unifiedScouts[s.name] = { name: s.name, patrol: s.patrol, records: [] };
+                    unifiedScouts[s.name] = { name: s.name, patrol: s.patrol, group: s.group, records: [] };
                 }
             });
 
+            // Parse historical scanner data
             globalAssessments.forEach(a => {
                 let baseName = a.scout;
                 let histPatrol = "";
+                let histGroup = "";
+                
+                // Matches format: "Name (Patrol)" OR "Name (Patrol - Group)"
                 if(baseName && baseName.includes(" (") && baseName.endsWith(")")) {
                     baseName = baseName.substring(0, baseName.lastIndexOf(" ("));
-                    histPatrol = a.scout.substring(a.scout.lastIndexOf(" (") + 2, a.scout.length - 1);
+                    
+                    let innerBrackets = a.scout.substring(a.scout.lastIndexOf(" (") + 2, a.scout.length - 1);
+                    if (innerBrackets.includes(" - ")) {
+                        let parts = innerBrackets.split(" - ");
+                        histPatrol = parts[0];
+                        histGroup = parts[1];
+                    } else {
+                        histPatrol = innerBrackets;
+                    }
                 }
                 
+                // Reconstruct scout if they were deleted from the config tab but have history
                 if (!unifiedScouts[baseName]) {
-                    unifiedScouts[baseName] = { name: baseName, patrol: histPatrol, records: [] };
+                    unifiedScouts[baseName] = { name: baseName, patrol: histPatrol, group: histGroup, records: [] };
                 }
                 unifiedScouts[baseName].records.push(a);
             });
@@ -788,7 +830,13 @@
                     <div class="dashboard-card" style="border-left: 6px solid ${colorHex};">
                         <div class="scout-header" onclick="toggleScoutDetails(${index})">
                             <div style="flex-grow: 1;">
-                                <h3>${scoutData.name} <span style="font-size:14px; color:#666; font-weight:normal;">${scoutData.patrol ? `(${scoutData.patrol})` : ''}</span></h3>
+                                <h3>
+                                    ${scoutData.name} 
+                                    <span style="font-size:14px; color:#666; font-weight:normal;">
+                                        ${scoutData.patrol ? `(${scoutData.patrol})` : ''} 
+                                        ${scoutData.group ? `[${scoutData.group}]` : ''}
+                                    </span>
+                                </h3>
                                 <div class="progress-bg"><div class="progress-fill" style="width: ${pct}%; background: ${colorHex};"></div></div>
                             </div>
                             <div style="display:flex; align-items: center; gap: 10px; margin-left: 15px;">
