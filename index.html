@@ -318,7 +318,7 @@
                 
                 configuredScouts.forEach(s => {
                     if(s && s.name) {
-                        const patrolString = s.patrol ? s.patrol.trim().toLowerCase() : "";
+                        const patrolString = s.patrol ? String(s.patrol).trim().toLowerCase() : "";
                         
                         // If they are a leader, add to assessor dropdown
                         if (patrolString === 'leader' || patrolString === 'young leader') {
@@ -376,7 +376,9 @@
             if (!silent) showToast("Syncing with Server...", "sync");
             
             try {
-                const response = await fetch(WEB_APP_URL);
+                // ADDED CACHE BUSTER TO BYPASS BROKEN REDIRECTS
+                const cacheBusterUrl = WEB_APP_URL + "?t=" + new Date().getTime();
+                const response = await fetch(cacheBusterUrl, { cache: "no-store" });
                 const data = await response.json();
                 
                 globalAssessments = data.assessments || [];
@@ -394,6 +396,7 @@
                 
                 if (!silent) showToast("Sync Complete!");
             } catch (error) {
+                console.error("Sync Error Details:", error); // ADDED LOGGING
                 if (!silent) showToast("Sync failed. Using local data.", "error");
             } finally {
                 if (syncIcon && !silent) syncIcon.classList.remove('spinning');
@@ -405,11 +408,12 @@
             const data = type === 'scouts' ? configuredScouts : configuredActivities;
             try {
                 await fetch(WEB_APP_URL, {
-                    method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" },
+                    method: "POST", mode: "no-cors", cache: "no-store", headers: { "Content-Type": "text/plain" },
                     body: JSON.stringify({ action: action, data: data })
                 });
                 showToast("Saved & Synced Cloud");
             } catch (e) {
+                console.error("Push Error Details:", e);
                 showToast("Saved Locally (Cloud sync failed)", "error");
             }
         }
@@ -541,7 +545,7 @@
                 card.className = 'qr-card';
                 
                 // Leaders print their names, scouts print their full data string
-                const pString = scout.patrol ? scout.patrol.trim().toLowerCase() : "";
+                const pString = scout.patrol ? String(scout.patrol).trim().toLowerCase() : "";
                 let qrValue = "";
                 if (pString === 'leader' || pString === 'young leader') {
                     qrValue = scout.name;
@@ -626,13 +630,14 @@
 
             try {
                 await fetch(WEB_APP_URL, {
-                    method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" },
+                    method: "POST", mode: "no-cors", cache: "no-store", headers: { "Content-Type": "text/plain" },
                     body: JSON.stringify(payload)
                 });
                 showToast(editingAssessmentId ? "Assessment Updated!" : "Assessment Saved!");
                 cancelAssessmentEdit(); 
                 syncMasterData(true); 
             } catch (error) {
+                console.error("Submit Error Details:", error);
                 showToast("Failed to submit. Check connection.", "error");
             } finally {
                 submitBtn.innerText = "Submit Assessment";
@@ -644,12 +649,15 @@
             if(!confirm("Delete this assessment?")) return;
             try {
                 await fetch(WEB_APP_URL, {
-                    method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" },
+                    method: "POST", mode: "no-cors", cache: "no-store", headers: { "Content-Type": "text/plain" },
                     body: JSON.stringify({ action: "delete", id: id })
                 });
                 showToast("Assessment Deleted!");
                 syncMasterData(true); 
-            } catch (error) { showToast("Failed to delete.", "error"); }
+            } catch (error) { 
+                console.error("Delete Error:", error);
+                showToast("Failed to delete.", "error"); 
+            }
         }
 
         function startEdit(id) {
@@ -782,7 +790,7 @@
             // Build base list from current configuration
             configuredScouts.forEach(s => {
                 if(s && s.name) {
-                    const pString = s.patrol ? s.patrol.trim().toLowerCase() : "";
+                    const pString = s.patrol ? String(s.patrol).trim().toLowerCase() : "";
                     // Exclude leaders from dashboard assessment tracking
                     if (pString !== 'leader' && pString !== 'young leader') {
                         unifiedScouts[s.name] = { name: s.name, patrol: s.patrol, group: s.group, records: [] };
