@@ -146,7 +146,7 @@
 
             <div class="form-group">
                 <label>Assessor Name</label>
-                <input type="text" id="assessorName" placeholder="e.g. Akela">
+                <select id="assessorName"><option value="">-- Select Assessor --</option></select>
             </div>
 
             <div class="form-group">
@@ -185,21 +185,21 @@
         <!-- 5. MANAGE & QR TAB -->
         <div id="admin" class="tab-content">
             <div class="admin-section">
-                <h3>Manage Scouts</h3>
+                <h3>Manage Scouts & Staff</h3>
                 <div class="import-box">
-                    <label style="font-size: 14px; margin-bottom: 10px;">Bulk Import Scouts (CSV: Name, Patrol, Group)</label>
+                    <label style="font-size: 14px; margin-bottom: 10px;">Bulk Import (CSV: Name, Patrol, Group)</label>
                     <input type="file" id="scoutCsvUpload" accept=".csv" style="margin-bottom: 10px;">
                     <button class="action-btn" style="background: var(--secondary); padding: 10px; font-size: 14px;" onclick="importScoutsCSV()">Import CSV & Sync</button>
                 </div>
                 
                 <div class="flex-row" style="margin-top: 15px;">
-                    <input type="text" id="newScoutName" placeholder="Scout Name">
-                    <input type="text" id="newScoutPatrol" placeholder="Patrol">
+                    <input type="text" id="newScoutName" placeholder="Name">
+                    <input type="text" id="newScoutPatrol" placeholder="Patrol (or 'Leader')">
                     <input type="text" id="newScoutGroup" placeholder="Group (e.g. 44th Croydon)">
                 </div>
                 
                 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <button id="scoutSubmitBtn" class="action-btn" style="padding: 12px; margin-bottom: 0;" onclick="submitScout()">Add Single Scout</button>
+                    <button id="scoutSubmitBtn" class="action-btn" style="padding: 12px; margin-bottom: 0;" onclick="submitScout()">Add Person</button>
                     <button id="scoutCancelBtn" class="action-btn" style="padding: 12px; background: #856404; display: none; margin-bottom: 0;" onclick="cancelScoutEdit()">Cancel</button>
                 </div>
 
@@ -309,14 +309,25 @@
 
         function refreshDropdownsAndLists() {
             const scoutSelect = document.getElementById('scoutSelect');
+            const assessorSelect = document.getElementById('assessorName');
             const activitySelect = document.getElementById('activitySelect');
             
-            if (scoutSelect) {
+            if (scoutSelect && assessorSelect) {
                 scoutSelect.innerHTML = '<option value="">-- Manual Fallback: Select Scout --</option>';
+                assessorSelect.innerHTML = '<option value="">-- Select Assessor --</option>';
+                
                 configuredScouts.forEach(s => {
                     if(s && s.name) {
-                        const valString = s.group ? `${s.name} (${s.patrol} - ${s.group})` : `${s.name} (${s.patrol})`;
-                        scoutSelect.innerHTML += `<option value="${valString}">${valString}</option>`;
+                        const patrolString = s.patrol ? s.patrol.trim().toLowerCase() : "";
+                        
+                        // If they are a leader, add to assessor dropdown
+                        if (patrolString === 'leader' || patrolString === 'young leader') {
+                            assessorSelect.innerHTML += `<option value="${s.name}">${s.name}</option>`;
+                        } else {
+                            // Otherwise, add to normal scout dropdown
+                            const valString = s.group ? `${s.name} (${s.patrol} - ${s.group})` : `${s.name} (${s.patrol})`;
+                            scoutSelect.innerHTML += `<option value="${valString}">${valString}</option>`;
+                        }
                     }
                 });
             }
@@ -412,10 +423,10 @@
             
             if (editingScoutIndex !== null) {
                 configuredScouts[editingScoutIndex] = { name, patrol, group };
-                showToast("Scout Updated");
+                showToast("Updated!");
             } else {
                 configuredScouts.push({ name, patrol, group });
-                showToast("Scout Added");
+                showToast("Added!");
             }
             
             localStorage.setItem('pl_scouts', JSON.stringify(configuredScouts));
@@ -431,7 +442,7 @@
             document.getElementById('newScoutGroup').value = configuredScouts[index].group || '';
             
             const submitBtn = document.getElementById('scoutSubmitBtn');
-            submitBtn.innerText = "Update Scout";
+            submitBtn.innerText = "Update";
             submitBtn.style.background = "var(--secondary)";
             
             document.getElementById('scoutCancelBtn').style.display = "block";
@@ -445,7 +456,7 @@
             document.getElementById('newScoutGroup').value = "";
             
             const submitBtn = document.getElementById('scoutSubmitBtn');
-            submitBtn.innerText = "Add Single Scout";
+            submitBtn.innerText = "Add Person";
             submitBtn.style.background = "var(--primary)";
             
             document.getElementById('scoutCancelBtn').style.display = "none";
@@ -522,14 +533,22 @@
         }
 
         function printQRCodes() {
-            if(configuredScouts.length === 0) return showToast("Add some Scouts first.", "error");
+            if(configuredScouts.length === 0) return showToast("Add some people first.", "error");
             const printArea = document.getElementById('printArea');
             printArea.innerHTML = '';
             configuredScouts.forEach(scout => {
                 const card = document.createElement('div');
                 card.className = 'qr-card';
                 
-                const qrValue = scout.group ? `${scout.name} (${scout.patrol} - ${scout.group})` : `${scout.name} (${scout.patrol})`;
+                // Leaders print their names, scouts print their full data string
+                const pString = scout.patrol ? scout.patrol.trim().toLowerCase() : "";
+                let qrValue = "";
+                if (pString === 'leader' || pString === 'young leader') {
+                    qrValue = scout.name;
+                } else {
+                    qrValue = scout.group ? `${scout.name} (${scout.patrol} - ${scout.group})` : `${scout.name} (${scout.patrol})`;
+                }
+                
                 const qr = new QRious({ value: qrValue, size: 150 });
                 
                 card.innerHTML = `
@@ -645,7 +664,11 @@
             const select = document.getElementById('scoutSelect');
             if (!Array.from(select.options).some(opt => opt.value === record.scout)) select.add(new Option(record.scout, record.scout));
             select.value = record.scout;
-            document.getElementById('assessorName').value = record.assessor;
+            
+            const assessorSelect = document.getElementById('assessorName');
+            if (!Array.from(assessorSelect.options).some(opt => opt.value === record.assessor)) assessorSelect.add(new Option(record.assessor, record.assessor));
+            assessorSelect.value = record.assessor;
+            
             document.getElementById('activitySelect').value = record.activity;
             document.getElementById('comments').value = record.comments;
             
@@ -663,6 +686,7 @@
             document.querySelector('.submit-btn').style.background = "var(--primary)";
             document.getElementById('scoutConfirm').innerText = "";
             document.getElementById('scoutSelect').value = "";
+            document.getElementById('assessorName').value = "";
             document.getElementById('comments').value = "";
             criteria.forEach((crit, index) => document.querySelector(`input[name="crit_${index}"][value="NOB"]`).checked = true);
         }
@@ -758,7 +782,11 @@
             // Build base list from current configuration
             configuredScouts.forEach(s => {
                 if(s && s.name) {
-                    unifiedScouts[s.name] = { name: s.name, patrol: s.patrol, group: s.group, records: [] };
+                    const pString = s.patrol ? s.patrol.trim().toLowerCase() : "";
+                    // Exclude leaders from dashboard assessment tracking
+                    if (pString !== 'leader' && pString !== 'young leader') {
+                        unifiedScouts[s.name] = { name: s.name, patrol: s.patrol, group: s.group, records: [] };
+                    }
                 }
             });
 
@@ -780,6 +808,11 @@
                     } else {
                         histPatrol = innerBrackets;
                     }
+                }
+                
+                // Exclude historical records if they are just listed as a leader
+                if (histPatrol.trim().toLowerCase() === 'leader' || histPatrol.trim().toLowerCase() === 'young leader') {
+                    return;
                 }
                 
                 // Reconstruct scout if they were deleted from the config tab but have history
