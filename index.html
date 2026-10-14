@@ -127,7 +127,7 @@
             </div>
 
             <div class="form-group" style="background: white; padding: 15px; border-radius: 12px; box-shadow: var(--card-shadow);">
-                <label>Scan Scout QR Code (or select manually)</label>
+                <label>Scan QR Code (Scout or Assessor)</label>
                 
                 <div id="startScannerContainer" style="text-align: center; margin: 15px 0;">
                     <button id="startScannerBtn" class="action-btn" style="background: var(--secondary); padding: 12px; margin: 0; display: inline-block; width: auto;" onclick="startScanner()">
@@ -139,9 +139,10 @@
                 </div>
 
                 <div id="reader" style="display: none;"></div>
+                <p id="scoutConfirm" style="font-weight: 800; margin-top: 10px; text-align: center;"></p>
                 
                 <select id="scoutSelect" style="margin-top: 10px;"><option value="">-- Manual Fallback: Select Scout --</option></select>
-                <p id="scoutConfirm" style="color: var(--success); font-weight: 800; margin-top: 10px; text-align: center;"></p>
+                
             </div>
 
             <div class="form-group">
@@ -376,7 +377,6 @@
             if (!silent) showToast("Syncing with Server...", "sync");
             
             try {
-                // ADDED CACHE BUSTER TO BYPASS BROKEN REDIRECTS
                 const cacheBusterUrl = WEB_APP_URL + "?t=" + new Date().getTime();
                 const response = await fetch(cacheBusterUrl, { cache: "no-store" });
                 const data = await response.json();
@@ -396,7 +396,7 @@
                 
                 if (!silent) showToast("Sync Complete!");
             } catch (error) {
-                console.error("Sync Error Details:", error); // ADDED LOGGING
+                console.error("Sync Error Details:", error);
                 if (!silent) showToast("Sync failed. Using local data.", "error");
             } finally {
                 if (syncIcon && !silent) syncIcon.classList.remove('spinning');
@@ -590,10 +590,31 @@
                 if (!html5QrcodeScanner) {
                     html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
                     html5QrcodeScanner.render((decodedText) => {
-                        const select = document.getElementById('scoutSelect');
-                        if (!Array.from(select.options).some(opt => opt.value === decodedText)) select.add(new Option(decodedText, decodedText));
-                        select.value = decodedText; 
-                        document.getElementById('scoutConfirm').innerText = `✓ Scout Locked: ${decodedText}`;
+                        const scoutSelect = document.getElementById('scoutSelect');
+                        const assessorSelect = document.getElementById('assessorName');
+                        const confirmText = document.getElementById('scoutConfirm');
+                        
+                        // Check if the scanned QR code matches a Leader/Assessor
+                        let isAssessor = false;
+                        if (Array.from(assessorSelect.options).some(opt => opt.value === decodedText)) {
+                            isAssessor = true;
+                        }
+
+                        if (isAssessor) {
+                            // Lock into the Assessor dropdown
+                            assessorSelect.value = decodedText;
+                            confirmText.innerText = `✓ Assessor Locked: ${decodedText}`;
+                            confirmText.style.color = "var(--primary)";
+                        } else {
+                            // Lock into the Scout dropdown
+                            if (!Array.from(scoutSelect.options).some(opt => opt.value === decodedText)) {
+                                scoutSelect.add(new Option(decodedText, decodedText));
+                            }
+                            scoutSelect.value = decodedText; 
+                            confirmText.innerText = `✓ Scout Locked: ${decodedText}`;
+                            confirmText.style.color = "var(--success)";
+                        }
+
                         showToast(`Scanned: ${decodedText}`);
                         html5QrcodeScanner.pause();
                         setTimeout(() => html5QrcodeScanner.resume(), 3000); 
